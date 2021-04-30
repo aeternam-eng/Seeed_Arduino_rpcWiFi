@@ -1,5 +1,5 @@
 /*
-  WebServer.h - Dead simple web-server.
+  rpcWebServer.h - Dead simple web-server.
   Supports only one simultaneous client, knows how to handle GET and POST.
 
   Copyright (c) 2014 Ivan Grokhotkov. All rights reserved.
@@ -21,18 +21,18 @@
 */
 
 
-#ifndef WEBSERVER_H
-#define WEBSERVER_H
+#ifndef RPCWEBSERVER_H
+#define RPCWEBSERVER_H
 
 #include <functional>
 #include <memory>
 #include <rpcWiFi.h>
 #include "HTTP_Method.h"
 
-enum HTTPUploadStatus { UPLOAD_FILE_START, UPLOAD_FILE_WRITE, UPLOAD_FILE_END,
-                        UPLOAD_FILE_ABORTED };
-enum HTTPClientStatus { HC_NONE, HC_WAIT_READ, HC_WAIT_CLOSE };
-enum HTTPAuthMethod { BASIC_AUTH, DIGEST_AUTH };
+enum rpcHTTPUploadStatus { RPC_UPLOAD_FILE_START, RPC_UPLOAD_FILE_WRITE, RPC_UPLOAD_FILE_END,
+                        RPC_UPLOAD_FILE_ABORTED };
+enum rpcHTTPClientStatus { RPC_HC_NONE, RPC_HC_WAIT_READ, RPC_HC_WAIT_CLOSE };
+enum rpcHTTPAuthMethod { RPC_BASIC_AUTH, RPC_DIGEST_AUTH };
 
 #define HTTP_DOWNLOAD_UNIT_SIZE 1436
 
@@ -48,17 +48,17 @@ enum HTTPAuthMethod { BASIC_AUTH, DIGEST_AUTH };
 #define CONTENT_LENGTH_UNKNOWN ((size_t) -1)
 #define CONTENT_LENGTH_NOT_SET ((size_t) -2)
 
-class WebServer;
+class rpcWebServer;
 
 typedef struct {
-  HTTPUploadStatus status;
+  rpcHTTPUploadStatus status;
   String  filename;
   String  name;
   String  type;
   size_t  totalSize;    // file size
   size_t  currentSize;  // size of data currently in buf
   uint8_t buf[HTTP_UPLOAD_BUFLEN];
-} HTTPUpload;
+} rpcHTTPUpload;
 
 #include "detail/RequestHandler.h"
 
@@ -66,12 +66,12 @@ namespace fs {
 class FS;
 }
 
-class WebServer
+class rpcWebServer
 {
 public:
-  WebServer(IPAddress addr, int port = 80);
-  WebServer(int port = 80);
-  virtual ~WebServer();
+  rpcWebServer(IPAddress addr, int port = 80);
+  rpcWebServer(int port = 80);
+  virtual ~rpcWebServer();
 
   virtual void begin();
   virtual void begin(uint16_t port);
@@ -81,7 +81,7 @@ public:
   void stop();
 
   bool authenticate(const char * username, const char * password);
-  void requestAuthentication(HTTPAuthMethod mode = BASIC_AUTH, const char* realm = NULL, const String& authFailMsg = String("") );
+  void requestAuthentication(rpcHTTPAuthMethod mode = RPC_BASIC_AUTH, const char* realm = NULL, const String& authFailMsg = String("") );
 
   typedef std::function<void(void)> THandlerFunction;
   void on(const String &uri, THandlerFunction handler);
@@ -94,8 +94,8 @@ public:
 
   String uri() { return _currentUri; }
   HTTPMethod method() { return _currentMethod; }
-  virtual WiFiClient client() { return _currentClient; }
-  HTTPUpload& upload() { return *_currentUpload; }
+  virtual rpcWiFiClient client() { return _currentClient; }
+  rpcHTTPUpload& upload() { return *_currentUpload; }
 
   String pathArg(unsigned int i); // get request path argument by number
   String arg(String name);        // get request argument value by name
@@ -138,6 +138,7 @@ public:
     _streamFileCore(file.size(), file.name(), contentType);
     uint8_t buffer[512];
     uint32_t remain = file.size();
+    uint32_t size = file.size();
     uint16_t bytesToWrite = 0;
     uint32_t count = 0;
 
@@ -158,13 +159,13 @@ protected:
   void _addRequestHandler(RequestHandler* handler);
   void _handleRequest();
   void _finalizeResponse();
-  bool _parseRequest(WiFiClient& client);
+  bool _parseRequest(rpcWiFiClient& client);
   void _parseArguments(String data);
   static String _responseCodeToString(int code);
-  bool _parseForm(WiFiClient& client, String boundary, uint32_t len);
+  bool _parseForm(rpcWiFiClient& client, String boundary, uint32_t len);
   bool _parseFormUploadAborted();
   void _uploadWriteByte(uint8_t b);
-  int _uploadReadByte(WiFiClient& client);
+  int _uploadReadByte(rpcWiFiClient& client);
   void _prepareHeader(String& response, int code, const char* content_type, size_t contentLength);
   bool _collectHeader(const char* headerName, const char* headerValue);
 
@@ -180,13 +181,13 @@ protected:
   };
 
   boolean     _corsEnabled;
-  WiFiServer  _server;
+  rpcWiFiServer  _server;
 
-  WiFiClient  _currentClient;
+  rpcWiFiClient  _currentClient;
   HTTPMethod  _currentMethod;
   String      _currentUri;
   uint8_t     _currentVersion;
-  HTTPClientStatus _currentStatus;
+  rpcHTTPClientStatus _currentStatus;
   unsigned long _statusChange;
 
   RequestHandler*  _currentHandler;
@@ -200,7 +201,7 @@ protected:
   int              _postArgsLen;
   RequestArgument* _postArgs;
 
-  std::unique_ptr<HTTPUpload> _currentUpload;
+  std::unique_ptr<rpcHTTPUpload> _currentUpload;
 
   int              _headerKeysCount;
   RequestArgument* _currentHeaders;

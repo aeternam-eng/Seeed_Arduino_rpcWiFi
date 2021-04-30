@@ -1,5 +1,5 @@
 /*
-  WebServer.cpp - Dead simple web-server.
+  rpcWebServer.cpp - Dead simple web-server.
   Supports only one simultaneous client, knows how to handle GET and POST.
 
   Copyright (c) 2014 Ivan Grokhotkov. All rights reserved.
@@ -24,10 +24,10 @@
 #include <Arduino.h>
 #include "esp/esp_hal_log.h"
 #include <libb64/cencode.h>
-#include "WiFiServer.h"
-#include "WiFiClient.h"
-#include "WebServer.h"
-#include "Seeed_FS.h"
+#include "rpcWiFiServer.h"
+#include "rpcWiFiClient.h"
+#include "rpcWebServer.h"
+#include "FS.h"
 #include "Seeed_mbedtls.h"
 #include "mbedtls/md5.h"
 #include "detail/RequestHandlersImpl.h"
@@ -39,12 +39,12 @@ static const char WWW_Authenticate[] = "WWW-Authenticate";
 static const char Content_Length[] = "Content-Length";
 
 
-WebServer::WebServer(IPAddress addr, int port)
+rpcWebServer::rpcWebServer(IPAddress addr, int port)
 : _corsEnabled(false)
 , _server(addr, port)
 , _currentMethod(HTTP_ANY)
 , _currentVersion(0)
-, _currentStatus(HC_NONE)
+, _currentStatus(RPC_HC_NONE)
 , _statusChange(0)
 , _currentHandler(nullptr)
 , _firstHandler(nullptr)
@@ -60,12 +60,12 @@ WebServer::WebServer(IPAddress addr, int port)
 {
 }
 
-WebServer::WebServer(int port)
+rpcWebServer::rpcWebServer(int port)
 : _corsEnabled(false)
 , _server(port)
 , _currentMethod(HTTP_ANY)
 , _currentVersion(0)
-, _currentStatus(HC_NONE)
+, _currentStatus(RPC_HC_NONE)
 , _statusChange(0)
 , _currentHandler(nullptr)
 , _firstHandler(nullptr)
@@ -81,7 +81,7 @@ WebServer::WebServer(int port)
 {
 }
 
-WebServer::~WebServer() {
+rpcWebServer::~rpcWebServer() {
   _server.close();
   if (_currentHeaders)
     delete[]_currentHeaders;
@@ -93,19 +93,19 @@ WebServer::~WebServer() {
   }
 }
 
-void WebServer::begin() {
+void rpcWebServer::begin() {
   close();
   _server.begin();
   _server.setNoDelay(true);
 }
 
-void WebServer::begin(uint16_t port) {
+void rpcWebServer::begin(uint16_t port) {
   close();
   _server.begin(port);
   _server.setNoDelay(true);
 }
 
-String WebServer::_extractParam(String& authReq,const String& param,const char delimit){
+String rpcWebServer::_extractParam(String& authReq,const String& param,const char delimit){
   int _begin = authReq.indexOf(param);
   if (_begin == -1)
     return "";
@@ -132,7 +132,7 @@ static String md5str(String &in){
   return String(out);
 }
 
-bool WebServer::authenticate(const char * username, const char * password){
+bool rpcWebServer::authenticate(const char * username, const char * password){
   if(hasHeader(FPSTR(AUTHORIZATION_HEADER))) {
     String authReq = header(FPSTR(AUTHORIZATION_HEADER));
     if(authReq.startsWith(F("Basic"))){
@@ -220,22 +220,22 @@ bool WebServer::authenticate(const char * username, const char * password){
   return false;
 }
 
-String WebServer::_getRandomHexString() {
+String rpcWebServer::_getRandomHexString() {
   char buffer[33];  // buffer to hold 32 Hex Digit + /0
   int i;
   for(i = 0; i < 4; i++) {
-    sprintf (buffer + (i*8), "%08lx", millis());
+    sprintf (buffer + (i*8), "%08x", millis());
   }
   return String(buffer);
 }
 
-void WebServer::requestAuthentication(HTTPAuthMethod mode, const char* realm, const String& authFailMsg) {
+void rpcWebServer::requestAuthentication(rpcHTTPAuthMethod mode, const char* realm, const String& authFailMsg) {
   if(realm == NULL) {
     _srealm = String(F("Login Required"));
   } else {
     _srealm = String(realm);
   }
-  if(mode == BASIC_AUTH) {
+  if(mode == RPC_BASIC_AUTH) {
     sendHeader(String(FPSTR(WWW_Authenticate)), String(F("Basic realm=\"")) + _srealm + String(F("\"")));
   } else {
     _snonce=_getRandomHexString();
@@ -246,23 +246,23 @@ void WebServer::requestAuthentication(HTTPAuthMethod mode, const char* realm, co
   send(401, String(FPSTR(mimeTable[html].mimeType)), authFailMsg);
 }
 
-void WebServer::on(const String &uri, WebServer::THandlerFunction handler) {
+void rpcWebServer::on(const String &uri, rpcWebServer::THandlerFunction handler) {
   on(uri, HTTP_ANY, handler);
 }
 
-void WebServer::on(const String &uri, HTTPMethod method, WebServer::THandlerFunction fn) {
+void rpcWebServer::on(const String &uri, HTTPMethod method, rpcWebServer::THandlerFunction fn) {
   on(uri, method, fn, _fileUploadHandler);
 }
 
-void WebServer::on(const String &uri, HTTPMethod method, WebServer::THandlerFunction fn, WebServer::THandlerFunction ufn) {
+void rpcWebServer::on(const String &uri, HTTPMethod method, rpcWebServer::THandlerFunction fn, rpcWebServer::THandlerFunction ufn) {
   _addRequestHandler(new FunctionRequestHandler(fn, ufn, uri, method));
 }
 
-void WebServer::addHandler(RequestHandler* handler) {
+void rpcWebServer::addHandler(RequestHandler* handler) {
     _addRequestHandler(handler);
 }
 
-void WebServer::_addRequestHandler(RequestHandler* handler) {
+void rpcWebServer::_addRequestHandler(RequestHandler* handler) {
     if (!_lastHandler) {
       _firstHandler = handler;
       _lastHandler = handler;
@@ -273,13 +273,13 @@ void WebServer::_addRequestHandler(RequestHandler* handler) {
     }
 }
 
-void WebServer::serveStatic(const char* uri, FS& fs, const char* path, const char* cache_header) {
+void rpcWebServer::serveStatic(const char* uri, FS& fs, const char* path, const char* cache_header) {
     _addRequestHandler(new StaticRequestHandler(fs, path, uri, cache_header));
 }
 
-void WebServer::handleClient() {
-  if (_currentStatus == HC_NONE) {
-    WiFiClient client = _server.available();
+void rpcWebServer::handleClient() {
+  if (_currentStatus == RPC_HC_NONE) {
+    rpcWiFiClient client = _server.available();
     if (!client) {
       return;
     }
@@ -287,7 +287,7 @@ void WebServer::handleClient() {
     log_v("New client");
 
     _currentClient = client;
-    _currentStatus = HC_WAIT_READ;
+    _currentStatus = RPC_HC_WAIT_READ;
     _statusChange = millis();
   }
 
@@ -296,10 +296,10 @@ void WebServer::handleClient() {
 
   if (_currentClient.connected()) {
     switch (_currentStatus) {
-    case HC_NONE:
+    case RPC_HC_NONE:
       // No-op to avoid C++ compiler warning
       break;
-    case HC_WAIT_READ:
+    case RPC_HC_WAIT_READ:
       // Wait for data from client to become available
       if (_currentClient.available()) {
         if (_parseRequest(_currentClient)) {
@@ -310,7 +310,7 @@ void WebServer::handleClient() {
           _handleRequest();
 
           if (_currentClient.connected()) {
-            _currentStatus = HC_WAIT_CLOSE;
+            _currentStatus = RPC_HC_WAIT_CLOSE;
             _statusChange = millis();
             keepCurrentClient = true;
           }
@@ -322,7 +322,7 @@ void WebServer::handleClient() {
         callYield = true;
       }
       break;
-    case HC_WAIT_CLOSE:
+    case RPC_HC_WAIT_CLOSE:
       // Wait for client to close the connection
       if (millis() - _statusChange <= HTTP_MAX_CLOSE_WAIT) {
         keepCurrentClient = true;
@@ -332,8 +332,8 @@ void WebServer::handleClient() {
   }
 
   if (!keepCurrentClient) {
-    _currentClient = WiFiClient();
-    _currentStatus = HC_NONE;
+    _currentClient = rpcWiFiClient();
+    _currentStatus = RPC_HC_NONE;
     _currentUpload.reset();
   }
 
@@ -342,18 +342,18 @@ void WebServer::handleClient() {
   }
 }
 
-void WebServer::close() {
+void rpcWebServer::close() {
   _server.close();
-  _currentStatus = HC_NONE;
+  _currentStatus = RPC_HC_NONE;
   if(!_headerKeysCount)
     collectHeaders(0, 0);
 }
 
-void WebServer::stop() {
+void rpcWebServer::stop() {
   close();
 }
 
-void WebServer::sendHeader(const String& name, const String& value, bool first) {
+void rpcWebServer::sendHeader(const String& name, const String& value, bool first) {
   String headerLine = name;
   headerLine += F(": ");
   headerLine += value;
@@ -367,19 +367,19 @@ void WebServer::sendHeader(const String& name, const String& value, bool first) 
   }
 }
 
-void WebServer::setContentLength(const size_t contentLength) {
+void rpcWebServer::setContentLength(const size_t contentLength) {
     _contentLength = contentLength;
 }
 
-void WebServer::enableCORS(boolean value) {
+void rpcWebServer::enableCORS(boolean value) {
   _corsEnabled = value;
 }
 
-void WebServer::enableCrossOrigin(boolean value) {
+void rpcWebServer::enableCrossOrigin(boolean value) {
   enableCORS(value);
 }
 
-void WebServer::_prepareHeader(String& response, int code, const char* content_type, size_t contentLength) {
+void rpcWebServer::_prepareHeader(String& response, int code, const char* content_type, size_t contentLength) {
     response = String(F("HTTP/1.")) + String(_currentVersion) + ' ';
     response += String(code);
     response += ' ';
@@ -411,7 +411,7 @@ void WebServer::_prepareHeader(String& response, int code, const char* content_t
     _responseHeaders = "";
 }
 
-void WebServer::send(int code, const char* content_type, const String& content) {
+void rpcWebServer::send(int code, const char* content_type, const String& content) {
     String header;
     // Can we asume the following?
     //if(code == 200 && content.length() == 0 && _contentLength == CONTENT_LENGTH_NOT_SET)
@@ -422,7 +422,7 @@ void WebServer::send(int code, const char* content_type, const String& content) 
       sendContent(content);
 }
 
-void WebServer::send_P(int code, PGM_P content_type, PGM_P content) {
+void rpcWebServer::send_P(int code, PGM_P content_type, PGM_P content) {
     size_t contentLength = 0;
 
     if (content != NULL) {
@@ -437,7 +437,7 @@ void WebServer::send_P(int code, PGM_P content_type, PGM_P content) {
     sendContent_P(content);
 }
 
-void WebServer::send_P(int code, PGM_P content_type, PGM_P content, size_t contentLength) {
+void rpcWebServer::send_P(int code, PGM_P content_type, PGM_P content, size_t contentLength) {
     String header;
     char type[64];
     memccpy_P((void*)type, (PGM_VOID_P)content_type, 0, sizeof(type));
@@ -446,15 +446,15 @@ void WebServer::send_P(int code, PGM_P content_type, PGM_P content, size_t conte
     sendContent_P(content, contentLength);
 }
 
-void WebServer::send(int code, char* content_type, const String& content) {
+void rpcWebServer::send(int code, char* content_type, const String& content) {
   send(code, (const char*)content_type, content);
 }
 
-void WebServer::send(int code, const String& content_type, const String& content) {
+void rpcWebServer::send(int code, const String& content_type, const String& content) {
   send(code, (const char*)content_type.c_str(), content);
 }
 
-void WebServer::sendContent(const String& content) {
+void rpcWebServer::sendContent(const String& content) {
   const char * footer = "\r\n";
   size_t len = content.length();
   if(_chunked) {
@@ -474,11 +474,11 @@ void WebServer::sendContent(const String& content) {
   }
 }
 
-void WebServer::sendContent_P(PGM_P content) {
+void rpcWebServer::sendContent_P(PGM_P content) {
   sendContent_P(content, strlen_P(content));
 }
 
-void WebServer::sendContent_P(PGM_P content, size_t size) {
+void rpcWebServer::sendContent_P(PGM_P content, size_t size) {
   const char * footer = "\r\n";
   if(_chunked) {
     char * chunkSize = (char *)malloc(11);
@@ -498,7 +498,7 @@ void WebServer::sendContent_P(PGM_P content, size_t size) {
 }
 
 
-void WebServer::_streamFileCore(const size_t fileSize, const String & fileName, const String & contentType)
+void rpcWebServer::_streamFileCore(const size_t fileSize, const String & fileName, const String & contentType)
 {
   using namespace mime;
   setContentLength(fileSize);
@@ -510,13 +510,13 @@ void WebServer::_streamFileCore(const size_t fileSize, const String & fileName, 
   send(200, contentType, "");
 }
 
-String WebServer::pathArg(unsigned int i) {
+String rpcWebServer::pathArg(unsigned int i) {
   if (_currentHandler != nullptr)
     return _currentHandler->pathArg(i);
   return "";
 }
 
-String WebServer::arg(String name) {
+String rpcWebServer::arg(String name) {
   for (int j = 0; j < _postArgsLen; ++j) {
 	    if ( _postArgs[j].key == name )
 	      return _postArgs[j].value;
@@ -528,23 +528,23 @@ String WebServer::arg(String name) {
   return "";
 }
 
-String WebServer::arg(int i) {
+String rpcWebServer::arg(int i) {
   if (i < _currentArgCount)
     return _currentArgs[i].value;
   return "";
 }
 
-String WebServer::argName(int i) {
+String rpcWebServer::argName(int i) {
   if (i < _currentArgCount)
     return _currentArgs[i].key;
   return "";
 }
 
-int WebServer::args() {
+int rpcWebServer::args() {
   return _currentArgCount;
 }
 
-bool WebServer::hasArg(String  name) {
+bool rpcWebServer::hasArg(String  name) {
   for (int j = 0; j < _postArgsLen; ++j) {
 	    if (_postArgs[j].key == name)
 	      return true;
@@ -557,7 +557,7 @@ bool WebServer::hasArg(String  name) {
 }
 
 
-String WebServer::header(String name) {
+String rpcWebServer::header(String name) {
   for (int i = 0; i < _headerKeysCount; ++i) {
     if (_currentHeaders[i].key.equalsIgnoreCase(name))
       return _currentHeaders[i].value;
@@ -565,7 +565,7 @@ String WebServer::header(String name) {
   return "";
 }
 
-void WebServer::collectHeaders(const char* headerKeys[], const size_t headerKeysCount) {
+void rpcWebServer::collectHeaders(const char* headerKeys[], const size_t headerKeysCount) {
   _headerKeysCount = headerKeysCount + 1;
   if (_currentHeaders)
      delete[]_currentHeaders;
@@ -576,23 +576,23 @@ void WebServer::collectHeaders(const char* headerKeys[], const size_t headerKeys
   }
 }
 
-String WebServer::header(int i) {
+String rpcWebServer::header(int i) {
   if (i < _headerKeysCount)
     return _currentHeaders[i].value;
   return "";
 }
 
-String WebServer::headerName(int i) {
+String rpcWebServer::headerName(int i) {
   if (i < _headerKeysCount)
     return _currentHeaders[i].key;
   return "";
 }
 
-int WebServer::headers() {
+int rpcWebServer::headers() {
   return _headerKeysCount;
 }
 
-bool WebServer::hasHeader(String name) {
+bool rpcWebServer::hasHeader(String name) {
   for (int i = 0; i < _headerKeysCount; ++i) {
     if ((_currentHeaders[i].key.equalsIgnoreCase(name)) &&  (_currentHeaders[i].value.length() > 0))
       return true;
@@ -600,19 +600,19 @@ bool WebServer::hasHeader(String name) {
   return false;
 }
 
-String WebServer::hostHeader() {
+String rpcWebServer::hostHeader() {
   return _hostHeader;
 }
 
-void WebServer::onFileUpload(THandlerFunction fn) {
+void rpcWebServer::onFileUpload(THandlerFunction fn) {
   _fileUploadHandler = fn;
 }
 
-void WebServer::onNotFound(THandlerFunction fn) {
+void rpcWebServer::onNotFound(THandlerFunction fn) {
   _notFoundHandler = fn;
 }
 
-void WebServer::_handleRequest() {
+void rpcWebServer::_handleRequest() {
   bool handled = false;
   if (!_currentHandler){
     log_e("request handler not found");
@@ -639,13 +639,13 @@ void WebServer::_handleRequest() {
 }
 
 
-void WebServer::_finalizeResponse() {
+void rpcWebServer::_finalizeResponse() {
   if (_chunked) {
     sendContent("");
   }
 }
 
-String WebServer::_responseCodeToString(int code) {
+String rpcWebServer::_responseCodeToString(int code) {
   switch (code) {
     case 100: return F("Continue");
     case 101: return F("Switching Protocols");

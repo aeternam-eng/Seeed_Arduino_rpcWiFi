@@ -20,15 +20,15 @@
  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef ESP32WIFISTA_H_
-#define ESP32WIFISTA_H_
+#ifndef RPCESP32WIFISTA_H_
+#define RPCESP32WIFISTA_H_
 
 
 #include "WiFiType.h"
-#include "WiFiGeneric.h"
+#include "rpcWiFiGeneric.h"
 
 
-class WiFiSTAClass
+class rpcWiFiSTAClass
 {
     // ----------------------------------------------------------------------------------------------
     // ---------------------------------------- STA function ----------------------------------------

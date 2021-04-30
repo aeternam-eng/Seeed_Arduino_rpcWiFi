@@ -1,5 +1,5 @@
 #include "mimetable.h"
-#include "avr/pgmspace.h"
+#include "pgmspace.h"
 
 namespace mime
 {

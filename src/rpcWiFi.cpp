@@ -21,7 +21,7 @@
 //  Reworked on 28 Dec 2015 by Markus Sattler
 
 //  */
-#include "WiFi.h"
+#include "rpcWiFi.h"
 
 extern "C" {
 #include <stdint.h>
@@ -42,7 +42,7 @@ extern "C" {
  * Output WiFi settings to an object derived from Print interface (like Serial).
  * @param p Print interface
  */
-void WiFiClass::printDiag(Print& p)
+void rpcWiFiClass::printDiag(Print& p)
 {
     // const char* modes[] = { "NULL", "STA", "AP", "STA+AP" };
 
@@ -85,4 +85,4 @@ void WiFiClass::printDiag(Print& p)
     // p.println(conf.sta.bssid_set);
 }
 
-WiFiClass WiFi;
+rpcWiFiClass rpcWiFi;

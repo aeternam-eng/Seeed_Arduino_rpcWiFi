@@ -32,14 +32,14 @@
  * bjoern@cs.stanford.edu 12/30/2008
  */
 
-#ifndef _WIFIUDP_H_
-#define _WIFIUDP_H_
+#ifndef _RPCWIFIUDP_H_
+#define _RPCWIFIUDP_H_
 
 #include <Arduino.h>
 #include <Udp.h>
 #include <cbuf.h>
 
-class WiFiUDP : public UDP {
+class rpcWiFiUDP : public UDP {
 private:
   int udp_server;
   IPAddress multicast_ip;
@@ -50,8 +50,8 @@ private:
   size_t tx_buffer_len;
   cbuf * rx_buffer;
 public:
-  WiFiUDP();
-  ~WiFiUDP();
+  rpcWiFiUDP();
+  ~rpcWiFiUDP();
   uint8_t begin(IPAddress a, uint16_t p);
   uint8_t begin(uint16_t p);
   uint8_t beginMulticast(IPAddress a, uint16_t p);

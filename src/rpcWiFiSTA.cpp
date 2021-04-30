@@ -1,5 +1,5 @@
 /*
- WiFiSTA.cpp - WiFi library for esp32
+ WiFiSTA.cpp - rpcWiFi library for esp32
 
  Copyright (c) 2014 Ivan Grokhotkov. All rights reserved.
  This file is part of the esp8266 core for Arduino environment.
@@ -22,9 +22,9 @@
 
  */
 
-#include "WiFi.h"
-#include "WiFiGeneric.h"
-#include "WiFiSTA.h"
+#include "rpcWiFi.h"
+#include "rpcWiFiGeneric.h"
+#include "rpcWiFiSTA.h"
 
 extern "C"
 {
@@ -34,21 +34,21 @@ extern "C"
 #include <stdlib.h>
 #include <inttypes.h>
 #include <string.h>
-#include "lwip/err.h"
-#include "lwip/dns.h"
+#include "new_lwip/err.h"
+#include "new_lwip/dns.h"
 }
 
 // -----------------------------------------------------------------------------------------------------------------------
 // ---------------------------------------------------- STA function -----------------------------------------------------
 // -----------------------------------------------------------------------------------------------------------------------
 
-bool WiFiSTAClass::_autoReconnect = true;
-bool WiFiSTAClass::_useStaticIp = false;
+bool rpcWiFiSTAClass::_autoReconnect = true;
+bool rpcWiFiSTAClass::_useStaticIp = false;
 
 static wl_status_t _sta_status = WL_NO_SHIELD;
 static EventGroupHandle_t _sta_status_group = NULL;
 
-void WiFiSTAClass::_setStatus(wl_status_t status)
+void rpcWiFiSTAClass::_setStatus(wl_status_t status)
 {
     if (!_sta_status_group)
     {
@@ -69,7 +69,7 @@ void WiFiSTAClass::_setStatus(wl_status_t status)
  * @return one of the value defined in wl_status_t
  *
  */
-wl_status_t WiFiSTAClass::status()
+wl_status_t rpcWiFiSTAClass::status()
 {
     if (!_sta_status_group)
     {
@@ -83,7 +83,7 @@ wl_status_t WiFiSTAClass::status()
 }
 
 /**
- * Start Wifi connection
+ * Start rpcWiFi connection
  * if passphrase is set the most secure supported mode will be automatically selected
  * @param ssid const char*          Pointer to the SSID string.
  * @param passphrase const char *   Optional. Passphrase. Valid characters in a passphrase must be between ASCII 32-126 (decimal).
@@ -92,10 +92,10 @@ wl_status_t WiFiSTAClass::status()
  * @param connect                   Optional. call connect
  * @return
  */
-wl_status_t WiFiSTAClass::begin(const char *ssid, const char *passphrase, int32_t channel, const uint8_t *bssid, bool connect)
+wl_status_t rpcWiFiSTAClass::begin(const char *ssid, const char *passphrase, int32_t channel, const uint8_t *bssid, bool connect)
 {
 
-    if (!WiFi.enableSTA(true))
+    if (!rpcWiFi.enableSTA(true))
     {
         log_e("STA enable failed!");
         return WL_CONNECT_FAILED;
@@ -118,7 +118,7 @@ wl_status_t WiFiSTAClass::begin(const char *ssid, const char *passphrase, int32_
     security_type = RTW_SECURITY_OPEN;
     if (passphrase != NULL)
     {
-        security_type = RTW_SECURITY_WPA2_AES_PSK;
+        security_type = RTW_SECURITY_WPA2_MIXED_PSK;
     }
 
     if (channel != 0 && bssid == NULL)
@@ -150,7 +150,7 @@ wl_status_t WiFiSTAClass::begin(const char *ssid, const char *passphrase, int32_
 
     if (!_useStaticIp)
     {
-        if (tcpip_adapter_dhcpc_start(TCPIP_ADAPTER_IF_STA) == ESP_ERR_TCPIP_ADAPTER_DHCPC_START_FAILED)
+        if (new_tcpip_adapter_dhcpc_start(RPC_TCPIP_ADAPTER_IF_STA) == ESP_ERR_TCPIP_ADAPTER_DHCPC_START_FAILED)
         {
             log_e("dhcp client start failed!");
             return WL_CONNECT_FAILED;
@@ -158,7 +158,7 @@ wl_status_t WiFiSTAClass::begin(const char *ssid, const char *passphrase, int32_
     }
     else
     {
-        tcpip_adapter_up(TCPIP_ADAPTER_IF_STA);
+        new_tcpip_adapter_up(RPC_TCPIP_ADAPTER_IF_STA);
     }
 
     if (connect && (wifi_is_connected_to_ap() != RTW_SUCCESS))
@@ -174,10 +174,10 @@ wl_status_t WiFiSTAClass::begin(const char *ssid, const char *passphrase, int32_
  * Use to connect to SDK config.
  * @return wl_status_t
  */
-wl_status_t WiFiSTAClass::begin()
+wl_status_t rpcWiFiSTAClass::begin()
 {
 
-    if (!WiFi.enableSTA(true))
+    if (!rpcWiFi.enableSTA(true))
     {
         log_e("STA enable failed!");
         return WL_CONNECT_FAILED;
@@ -190,10 +190,26 @@ wl_status_t WiFiSTAClass::begin()
         return WL_CONNECT_FAILED;
     }
 
+    uint32_t channel;
+    uint32_t security_type;
+    uint8_t pscan_config;
+    char key_id_str[2] = {0};
+    int key_id = -1;
     int ret;
 
-    const uint32_t security_type = wifi_info.security_type;
-    const int key_id = (char)(wifi_info.channel >> 28);
+    channel = wifi_info.channel;
+    sprintf(key_id_str, "%d", (char)(channel >> 28));
+    channel &= 0xff;
+    security_type = wifi_info.security_type;
+    pscan_config = PSCAN_ENABLE | PSCAN_FAST_SURVEY;
+    key_id = atoi((const char *)key_id_str);
+
+    // ret = wifi_set_pscan_chan((uint8_t *)&channel, &pscan_config, 1);
+    // if (ret < 0)
+    // {
+    //     log_e("connect failed!");
+    //     return WL_CONNECT_FAILED;
+    // }
 
     if (security_type == RTW_SECURITY_OPEN)
     {
@@ -212,7 +228,7 @@ wl_status_t WiFiSTAClass::begin()
 
     if (!_useStaticIp)
     {
-        if (tcpip_adapter_dhcpc_start(TCPIP_ADAPTER_IF_STA) == ESP_ERR_TCPIP_ADAPTER_DHCPC_START_FAILED)
+        if (new_tcpip_adapter_dhcpc_start(RPC_TCPIP_ADAPTER_IF_STA) == ESP_ERR_TCPIP_ADAPTER_DHCPC_START_FAILED)
         {
             log_e("dhcp client start failed!");
             return WL_CONNECT_FAILED;
@@ -220,7 +236,7 @@ wl_status_t WiFiSTAClass::begin()
     }
     else
     {
-        tcpip_adapter_dhcpc_stop(TCPIP_ADAPTER_IF_STA);
+        new_tcpip_adapter_dhcpc_stop(RPC_TCPIP_ADAPTER_IF_STA);
     }
 
     if (status() != WL_CONNECTED && (wifi_is_connected_to_ap() != RTW_SUCCESS))
@@ -236,9 +252,9 @@ wl_status_t WiFiSTAClass::begin()
  * will force a disconnect an then start  reconnectingto AP
  * @return ok
  */
-bool WiFiSTAClass::reconnect()
+bool rpcWiFiSTAClass::reconnect()
 {
-    if (WiFi.getMode() & WIFI_MODE_STA)
+    if (rpcWiFi.getMode() & WIFI_MODE_STA)
     {
         if (wifi_disconnect() == RTW_SUCCESS)
         {
@@ -253,10 +269,10 @@ bool WiFiSTAClass::reconnect()
  * @param wifioff
  * @return  one value of wl_status_t enum
  */
-bool WiFiSTAClass::disconnect(bool wifioff, bool eraseap)
+bool rpcWiFiSTAClass::disconnect(bool wifioff, bool eraseap)
 {
 
-    if (WiFi.getMode() & WIFI_MODE_STA)
+    if (rpcWiFi.getMode() & WIFI_MODE_STA)
     {
         if (eraseap)
         {
@@ -272,7 +288,7 @@ bool WiFiSTAClass::disconnect(bool wifioff, bool eraseap)
         }
         if (wifioff)
         {
-            return WiFi.enableSTA(false);
+            return rpcWiFi.enableSTA(false);
         }
         return true;
     }
@@ -288,16 +304,16 @@ bool WiFiSTAClass::disconnect(bool wifioff, bool eraseap)
  * @param dns1       Static DNS server 1
  * @param dns2       Static DNS server 2
  */
-bool WiFiSTAClass::config(IPAddress local_ip, IPAddress gateway, IPAddress subnet, IPAddress dns1, IPAddress dns2)
+bool rpcWiFiSTAClass::config(IPAddress local_ip, IPAddress gateway, IPAddress subnet, IPAddress dns1, IPAddress dns2)
 {
     esp_err_t err = ESP_OK;
 
-    if (!WiFi.enableSTA(true))
+    if (!rpcWiFi.enableSTA(true))
     {
         return false;
     }
 
-    tcpip_adapter_ip_info_t info;
+    rpc_tcpip_adapter_ip_info_t info;
 
     if (local_ip != (uint32_t)0x00000000)
     {
@@ -312,14 +328,14 @@ bool WiFiSTAClass::config(IPAddress local_ip, IPAddress gateway, IPAddress subne
         info.netmask.addr = 0;
     }
 
-    err = tcpip_adapter_dhcpc_stop(TCPIP_ADAPTER_IF_STA);
+    err = new_tcpip_adapter_dhcpc_stop(RPC_TCPIP_ADAPTER_IF_STA);
     if (err != ESP_OK && err != ESP_ERR_TCPIP_ADAPTER_DHCP_ALREADY_STOPPED)
     {
         log_e("DHCP could not be stopped! Error: %d", err);
         return false;
     }
 
-    err = tcpip_adapter_set_ip_info(TCPIP_ADAPTER_IF_STA, &info);
+    err = new_tcpip_adapter_set_ip_info(RPC_TCPIP_ADAPTER_IF_STA, &info);
     if (err != ERR_OK)
     {
         log_e("STA IP could not be configured! Error: %d", err);
@@ -332,7 +348,7 @@ bool WiFiSTAClass::config(IPAddress local_ip, IPAddress gateway, IPAddress subne
     }
     else
     {
-        err = tcpip_adapter_dhcpc_start(TCPIP_ADAPTER_IF_STA);
+        err = new_tcpip_adapter_dhcpc_start(RPC_TCPIP_ADAPTER_IF_STA);
         if (err == ESP_ERR_TCPIP_ADAPTER_DHCPC_START_FAILED)
         {
             log_e("dhcp client start failed!");
@@ -344,17 +360,17 @@ bool WiFiSTAClass::config(IPAddress local_ip, IPAddress gateway, IPAddress subne
     if (dns1 != (uint32_t)0x00000000)
     {
         // Set DNS1-Server
-        tcpip_adapter_dns_info_t tcpip_dns0;
+        rpc_tcpip_adapter_dns_info_t tcpip_dns0;
         tcpip_dns0.ipv4 = dns1;
-        tcpip_adapter_set_dns_info(TCPIP_ADAPTER_IF_MAX,TCPIP_ADAPTER_DNS_MAIN,&tcpip_dns0);
+        new_tcpip_adapter_set_dns_info(RPC_TCPIP_ADAPTER_IF_MAX,RPC_TCPIP_ADAPTER_DNS_MAIN,&tcpip_dns0);
     }
 
     if (dns2 != (uint32_t)0x00000000)
     {
         // Set DNS2-Server
-        tcpip_adapter_dns_info_t tcpip_dns1;
+        rpc_tcpip_adapter_dns_info_t tcpip_dns1;
         tcpip_dns1.ipv4 = dns2;
-        tcpip_adapter_set_dns_info(TCPIP_ADAPTER_IF_MAX,TCPIP_ADAPTER_DNS_BACKUP,&tcpip_dns1);
+        new_tcpip_adapter_set_dns_info(RPC_TCPIP_ADAPTER_IF_MAX,RPC_TCPIP_ADAPTER_DNS_BACKUP,&tcpip_dns1);
     }
 
     return true;
@@ -364,7 +380,7 @@ bool WiFiSTAClass::config(IPAddress local_ip, IPAddress gateway, IPAddress subne
  * is STA interface connected?
  * @return true if STA is connected to an AD
  */
-bool WiFiSTAClass::isConnected()
+bool rpcWiFiSTAClass::isConnected()
 {
     return (status() == WL_CONNECTED);
 }
@@ -373,7 +389,7 @@ bool WiFiSTAClass::isConnected()
  * Clear STA Connected Setting
  * @return true if clear action done
  */
-bool WiFiSTAClass::clearConnectedSetting()
+bool rpcWiFiSTAClass::clearConnectedSetting()
 {
     if(wifi_clear_reconnect_data() == 0){
         return false;
@@ -388,7 +404,7 @@ bool WiFiSTAClass::clearConnectedSetting()
  * @param autoConnect bool
  * @return if saved
  */
-bool WiFiSTAClass::setAutoConnect(bool autoConnect)
+bool rpcWiFiSTAClass::setAutoConnect(bool autoConnect)
 {
     // bool ret;
     // ret = (wifi_set_autoreconnect(autoConnect) == 0);
@@ -401,7 +417,7 @@ bool WiFiSTAClass::setAutoConnect(bool autoConnect)
  * automatically or not when it is powered on.
  * @return auto connect
  */
-bool WiFiSTAClass::getAutoConnect()
+bool rpcWiFiSTAClass::getAutoConnect()
 {
     // bool autoConnect;
     // uint8_t mode = 0;
@@ -411,7 +427,7 @@ bool WiFiSTAClass::getAutoConnect()
     return false;
 }
 
-bool WiFiSTAClass::setAutoReconnect(bool autoReconnect)
+bool rpcWiFiSTAClass::setAutoReconnect(bool autoReconnect)
 {
     // _autoReconnect = autoReconnect;
     // // return true;
@@ -420,7 +436,7 @@ bool WiFiSTAClass::setAutoReconnect(bool autoReconnect)
     return false;
 }
 
-bool WiFiSTAClass::getAutoReconnect()
+bool rpcWiFiSTAClass::getAutoReconnect()
 {
     // //return _autoReconnect;
     // bool autoReconnect;
@@ -431,14 +447,14 @@ bool WiFiSTAClass::getAutoReconnect()
 }
 
 /**
- * Wait for WiFi connection to reach a result
+ * Wait for rpcWiFi connection to reach a result
  * returns the status reached or disconnect if STA is off
  * @return wl_status_t
  */
-uint8_t WiFiSTAClass::waitForConnectResult()
+uint8_t rpcWiFiSTAClass::waitForConnectResult()
 {
     //1 and 3 have STA enabled
-    if ((WiFiGenericClass::getMode() & WIFI_MODE_STA) == 0)
+    if ((rpcWiFiGenericClass::getMode() & WIFI_MODE_STA) == 0)
     {
         return WL_DISCONNECTED;
     }
@@ -454,14 +470,14 @@ uint8_t WiFiSTAClass::waitForConnectResult()
  * Get the station interface IP address.
  * @return IPAddress station IP
  */
-IPAddress WiFiSTAClass::localIP()
+IPAddress rpcWiFiSTAClass::localIP()
 {
-    if (WiFiGenericClass::getMode() == WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() == WIFI_MODE_NULL)
     {
         return IPAddress();
     }
-    tcpip_adapter_ip_info_t ip;
-    tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_STA, &ip);
+    rpc_tcpip_adapter_ip_info_t ip;
+    new_tcpip_adapter_get_ip_info(RPC_TCPIP_ADAPTER_IF_STA, &ip);
     return IPAddress(ip.ip.addr);
 }
 
@@ -470,9 +486,9 @@ IPAddress WiFiSTAClass::localIP()
  * @param mac   pointer to uint8_t array with length WL_MAC_ADDR_LENGTH
  * @return      pointer to uint8_t *
  */
-uint8_t *WiFiSTAClass::macAddress(uint8_t *mac)
+uint8_t *rpcWiFiSTAClass::macAddress(uint8_t *mac)
 {
-    if (WiFiGenericClass::getMode() != WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() != WIFI_MODE_NULL)
     {
         String macStr = macAddress();
         for (int i = 0; i < 6; i++)
@@ -487,14 +503,14 @@ uint8_t *WiFiSTAClass::macAddress(uint8_t *mac)
  * Get the station interface MAC address.
  * @return String mac
  */
-String WiFiSTAClass::macAddress(void)
+String rpcWiFiSTAClass::macAddress(void)
 {
     char macStr[18] = {0};
-    if (WiFiGenericClass::getMode() == WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() == WIFI_MODE_NULL)
     {
         return String();
     }
-    tcpip_adapter_get_mac(TCPIP_ADAPTER_IF_AP, (uint8_t *)macStr);
+    new_tcpip_adapter_get_mac(RPC_TCPIP_ADAPTER_IF_AP, (uint8_t *)macStr);
 
     return String(macStr);
 }
@@ -503,14 +519,14 @@ String WiFiSTAClass::macAddress(void)
  * Get the interface subnet mask address.
  * @return IPAddress subnetMask
  */
-IPAddress WiFiSTAClass::subnetMask()
+IPAddress rpcWiFiSTAClass::subnetMask()
 {
-    if (WiFiGenericClass::getMode() == WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() == WIFI_MODE_NULL)
     {
         return IPAddress();
     }
-    tcpip_adapter_ip_info_t ip;
-    tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_STA, &ip);
+    rpc_tcpip_adapter_ip_info_t ip;
+    new_tcpip_adapter_get_ip_info(RPC_TCPIP_ADAPTER_IF_STA, &ip);
     return IPAddress(ip.netmask.addr);
 }
 
@@ -518,14 +534,14 @@ IPAddress WiFiSTAClass::subnetMask()
  * Get the gateway ip address.
  * @return IPAddress gatewayIP
  */
-IPAddress WiFiSTAClass::gatewayIP()
+IPAddress rpcWiFiSTAClass::gatewayIP()
 {
-    if (WiFiGenericClass::getMode() == WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() == WIFI_MODE_NULL)
     {
         return IPAddress();
     }
-    tcpip_adapter_ip_info_t ip;
-    tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_STA, &ip);
+    rpc_tcpip_adapter_ip_info_t ip;
+    new_tcpip_adapter_get_ip_info(RPC_TCPIP_ADAPTER_IF_STA, &ip);
     return IPAddress(ip.gw.addr);
 }
 
@@ -534,20 +550,20 @@ IPAddress WiFiSTAClass::gatewayIP()
  * @param dns_no
  * @return IPAddress DNS Server IP
  */
-IPAddress WiFiSTAClass::dnsIP(uint8_t dns_no)
+IPAddress rpcWiFiSTAClass::dnsIP(uint8_t dns_no)
 {
-    if (WiFiGenericClass::getMode() == WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() == WIFI_MODE_NULL)
     {
         return IPAddress();
     }
 
-    tcpip_adapter_dns_info_t tcpip_dns_ip;
+    rpc_tcpip_adapter_dns_info_t tcpip_dns_ip;
 
-    if(dns_no == TCPIP_ADAPTER_DNS_MAIN){
-        tcpip_adapter_get_dns_info(TCPIP_ADAPTER_IF_MAX,TCPIP_ADAPTER_DNS_MAIN,&tcpip_dns_ip);
+    if(dns_no == RPC_TCPIP_ADAPTER_DNS_MAIN){
+        new_tcpip_adapter_get_dns_info(RPC_TCPIP_ADAPTER_IF_MAX,RPC_TCPIP_ADAPTER_DNS_MAIN,&tcpip_dns_ip);
         return IPAddress(tcpip_dns_ip.ipv4);
     }else{
-        tcpip_adapter_get_dns_info(TCPIP_ADAPTER_IF_MAX,TCPIP_ADAPTER_DNS_BACKUP,&tcpip_dns_ip);
+        new_tcpip_adapter_get_dns_info(RPC_TCPIP_ADAPTER_IF_MAX,RPC_TCPIP_ADAPTER_DNS_BACKUP,&tcpip_dns_ip);
         return IPAddress(tcpip_dns_ip.ipv4);
     }
 }
@@ -556,60 +572,60 @@ IPAddress WiFiSTAClass::dnsIP(uint8_t dns_no)
  * Get the broadcast ip address.
  * @return IPAddress broadcastIP
  */
-IPAddress WiFiSTAClass::broadcastIP()
+IPAddress rpcWiFiSTAClass::broadcastIP()
 {
-    if (WiFiGenericClass::getMode() == WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() == WIFI_MODE_NULL)
     {
         return IPAddress();
     }
-    tcpip_adapter_ip_info_t ip;
-    tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_STA, &ip);
-    return WiFiGenericClass::calculateBroadcast(IPAddress(ip.gw.addr), IPAddress(ip.netmask.addr));
+    rpc_tcpip_adapter_ip_info_t ip;
+    new_tcpip_adapter_get_ip_info(RPC_TCPIP_ADAPTER_IF_STA, &ip);
+    return rpcWiFiGenericClass::calculateBroadcast(IPAddress(ip.gw.addr), IPAddress(ip.netmask.addr));
 }
 
 /**
  * Get the network id.
  * @return IPAddress networkID
  */
-IPAddress WiFiSTAClass::networkID()
+IPAddress rpcWiFiSTAClass::networkID()
 {
-    if (WiFiGenericClass::getMode() == WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() == WIFI_MODE_NULL)
     {
         return IPAddress();
     }
-    tcpip_adapter_ip_info_t ip;
-    tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_STA, &ip);
-    return WiFiGenericClass::calculateNetworkID(IPAddress(ip.gw.addr), IPAddress(ip.netmask.addr));
+    rpc_tcpip_adapter_ip_info_t ip;
+    new_tcpip_adapter_get_ip_info(RPC_TCPIP_ADAPTER_IF_STA, &ip);
+    return rpcWiFiGenericClass::calculateNetworkID(IPAddress(ip.gw.addr), IPAddress(ip.netmask.addr));
 }
 
 /**
  * Get the subnet CIDR.
  * @return uint8_t subnetCIDR
  */
-uint8_t WiFiSTAClass::subnetCIDR()
+uint8_t rpcWiFiSTAClass::subnetCIDR()
 {
-    if (WiFiGenericClass::getMode() == WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() == WIFI_MODE_NULL)
     {
         return (uint8_t)0;
     }
-    tcpip_adapter_ip_info_t ip;
-    tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_STA, &ip);
-    return WiFiGenericClass::calculateSubnetCIDR(IPAddress(ip.netmask.addr));
+    rpc_tcpip_adapter_ip_info_t ip;
+    new_tcpip_adapter_get_ip_info(RPC_TCPIP_ADAPTER_IF_STA, &ip);
+    return rpcWiFiGenericClass::calculateSubnetCIDR(IPAddress(ip.netmask.addr));
 }
 
 /**
  * Return the current SSID associated with the network
  * @return SSID
  */
-String WiFiSTAClass::SSID() const
+String rpcWiFiSTAClass::SSID() const
 {  
-    if(WiFiGenericClass::getMode() == WIFI_MODE_APSTA)
+    if(rpcWiFiGenericClass::getMode() == WIFI_MODE_APSTA)
     {
         rtw_wifi_setting_t wifi_setting;
         wifi_get_setting(WLAN1_NAME,&wifi_setting);
         return String(reinterpret_cast<char *>(wifi_setting.ssid));
     }
-    else if(WiFiGenericClass::getMode() == WIFI_MODE_STA)
+    else if(rpcWiFiGenericClass::getMode() == WIFI_MODE_STA)
     {
         rtw_wifi_setting_t wifi_setting;
         wifi_get_setting(WLAN0_NAME,&wifi_setting);
@@ -623,9 +639,9 @@ String WiFiSTAClass::SSID() const
  * Return the current pre shared key associated with the network
  * @return  psk string
  */
-String WiFiSTAClass::psk() const
+String rpcWiFiSTAClass::psk() const
 {
-    if (WiFiGenericClass::getMode() == WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() == WIFI_MODE_NULL)
     {
         return String();
     }
@@ -638,10 +654,10 @@ String WiFiSTAClass::psk() const
  * Return the current bssid / mac associated with the network if configured
  * @return bssid uint8_t *
  */
-uint8_t *WiFiSTAClass::BSSID(void)
+uint8_t *rpcWiFiSTAClass::BSSID(void)
 {
     static uint8_t bssid[6];
-    if (WiFiGenericClass::getMode() == WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() == WIFI_MODE_NULL)
     {
         return NULL;
     }
@@ -656,7 +672,7 @@ uint8_t *WiFiSTAClass::BSSID(void)
  * Return the current bssid / mac associated with the network if configured
  * @return String bssid mac
  */
-String WiFiSTAClass::BSSIDstr(void)
+String rpcWiFiSTAClass::BSSIDstr(void)
 {
     uint8_t *bssid = BSSID();
     if (!bssid)
@@ -672,9 +688,9 @@ String WiFiSTAClass::BSSIDstr(void)
  * Return the current network RSSI.
  * @return  RSSI value
  */
-int8_t WiFiSTAClass::RSSI(void)
+int8_t rpcWiFiSTAClass::RSSI(void)
 {
-    if (WiFiGenericClass::getMode() == WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() == WIFI_MODE_NULL)
     {
         return 0;
     }
@@ -690,14 +706,14 @@ int8_t WiFiSTAClass::RSSI(void)
  * Get the station interface Host name.
  * @return char array hostname
  */
-const char *WiFiSTAClass::getHostname()
+const char *rpcWiFiSTAClass::getHostname()
 {
     const char *hostname = NULL;
-    if (WiFiGenericClass::getMode() == WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() == WIFI_MODE_NULL)
     {
         return hostname;
     }
-    if (tcpip_adapter_get_hostname(TCPIP_ADAPTER_IF_STA, &hostname))
+    if (new_tcpip_adapter_get_hostname(RPC_TCPIP_ADAPTER_IF_STA, &hostname))
     {
         return NULL;
     }
@@ -709,62 +725,62 @@ const char *WiFiSTAClass::getHostname()
  * @param  hostname  pointer to const string
  * @return true on   success
  */
-bool WiFiSTAClass::setHostname(const char *hostname)
+bool rpcWiFiSTAClass::setHostname(const char *hostname)
 {
-    if (WiFiGenericClass::getMode() == WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() == WIFI_MODE_NULL)
     {
         return false;
     }
-    return tcpip_adapter_set_hostname(TCPIP_ADAPTER_IF_STA, hostname) == 0;
+    return new_tcpip_adapter_set_hostname(RPC_TCPIP_ADAPTER_IF_STA, hostname) == 0;
 }
 
 /**
  * Enable IPv6 on the station interface.
  * @return true on success
  */
-bool WiFiSTAClass::enableIpV6()
+bool rpcWiFiSTAClass::enableIpV6()
 {
-    if (WiFiGenericClass::getMode() == WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() == WIFI_MODE_NULL)
     {
         return false;
     }
-    return tcpip_adapter_create_ip6_linklocal(TCPIP_ADAPTER_IF_STA) == 0;
+    return new_tcpip_adapter_create_ip6_linklocal(RPC_TCPIP_ADAPTER_IF_STA) == 0;
 }
 
 /**
  * Get the station interface IPv6 address.
  * @return IPv6Address
  */
-IPv6Address WiFiSTAClass::localIPv6()
+IPv6Address rpcWiFiSTAClass::localIPv6()
 {
     static ip6_addr_t addr;
-    if (WiFiGenericClass::getMode() == WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() == WIFI_MODE_NULL)
     {
         return IPv6Address();
     }
-    if (tcpip_adapter_get_ip6_linklocal(TCPIP_ADAPTER_IF_STA, &addr))
+    if (new_tcpip_adapter_get_ip6_linklocal(RPC_TCPIP_ADAPTER_IF_STA, &addr))
     {
         return IPv6Address();
     }
     return IPv6Address(addr.addr);
 }
 
-// bool WiFiSTAClass::_smartConfigStarted = false;
-// bool WiFiSTAClass::_smartConfigDone = false;
+// bool rpcWiFiSTAClass::_smartConfigStarted = false;
+// bool rpcWiFiSTAClass::_smartConfigDone = false;
 
-// bool WiFiSTAClass::beginSmartConfig() {
+// bool rpcWiFiSTAClass::beginSmartConfig() {
 //     if (_smartConfigStarted) {
 //         return false;
 //     }
 
-//     if (!WiFi.mode(WIFI_STA)) {
+//     if (!rpcWiFi.mode(WIFI_STA)) {
 //         return false;
 //     }
 
 //     esp_wifi_disconnect();
 
 //     esp_err_t err;
-//     err = esp_smartconfig_start(reinterpret_cast<sc_callback_t>(&WiFiSTAClass::_smartConfigCallback), 1);
+//     err = esp_smartconfig_start(reinterpret_cast<sc_callback_t>(&rpcWiFiSTAClass::_smartConfigCallback), 1);
 //     if (err == ESP_OK) {
 //         _smartConfigStarted = true;
 //         _smartConfigDone = false;
@@ -773,7 +789,7 @@ IPv6Address WiFiSTAClass::localIPv6()
 //     return false;
 // }
 
-// bool WiFiSTAClass::stopSmartConfig() {
+// bool rpcWiFiSTAClass::stopSmartConfig() {
 //     if (!_smartConfigStarted) {
 //         return true;
 //     }
@@ -786,7 +802,7 @@ IPv6Address WiFiSTAClass::localIPv6()
 //     return false;
 // }
 
-// bool WiFiSTAClass::smartConfigDone() {
+// bool rpcWiFiSTAClass::smartConfigDone() {
 //     if (!_smartConfigStarted) {
 //         return false;
 //     }
@@ -810,7 +826,7 @@ IPv6Address WiFiSTAClass::localIPv6()
 // };
 // #endif
 
-// void WiFiSTAClass::_smartConfigCallback(uint32_t st, void* result) {
+// void rpcWiFiSTAClass::_smartConfigCallback(uint32_t st, void* result) {
 //     smartconfig_status_t status = (smartconfig_status_t) st;
 //     log_d("Status: %s", sc_status_strings[st % 5]);
 //     if (status == SC_STATUS_GETTING_SSID_PSWD) {
@@ -832,6 +848,6 @@ IPv6Address WiFiSTAClass::localIPv6()
 //             log_d("Sender IP: " IPSTR, IP2STR(ip));
 // #endif
 //         }
-//         WiFi.stopSmartConfig();
+//         rpcWiFi.stopSmartConfig();
 //     }
 // }

@@ -20,15 +20,15 @@
  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef ESP32WIFIAP_H_
-#define ESP32WIFIAP_H_
+#ifndef RPCESP32WIFIAP_H_
+#define RPCESP32WIFIAP_H_
 
 
 #include "WiFiType.h"
-#include "WiFiGeneric.h"
+#include "rpcWiFiGeneric.h"
 
 
-class WiFiAPClass
+class rpcWiFiAPClass
 {
 
     // ----------------------------------------------------------------------------------------------

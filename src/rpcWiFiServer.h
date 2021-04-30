@@ -16,14 +16,14 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#ifndef _WIFISERVER_H_
-#define _WIFISERVER_H_
+#ifndef _RPCWIFISERVER_H_
+#define _RPCWIFISERVER_H_
 
 #include "Arduino.h"
 #include "Server.h"
-#include "WiFiClient.h"
+#include "rpcWiFiClient.h"
 
-class WiFiServer : public Server {
+class rpcWiFiServer : public Server {
   private:
     int sockfd;
     int _accepted_sockfd = -1;
@@ -35,10 +35,10 @@ class WiFiServer : public Server {
   public:
     void listenOnLocalhost(){}
 
-    WiFiServer(uint16_t port=80, uint8_t max_clients=4):sockfd(-1),_accepted_sockfd(-1),_port(port),_max_clients(max_clients),_listening(false),_noDelay(false){}
-    ~WiFiServer(){ end();}
-    WiFiClient available();
-    WiFiClient accept(){return available();}
+    rpcWiFiServer(uint16_t port=80, uint8_t max_clients=4):sockfd(-1),_accepted_sockfd(-1),_port(port),_max_clients(max_clients),_listening(false),_noDelay(false){}
+    ~rpcWiFiServer(){ end();}
+    rpcWiFiClient available();
+    rpcWiFiClient accept(){return available();}
     void begin(uint16_t port);
     void begin() { begin(0);};
     void setNoDelay(bool nodelay);

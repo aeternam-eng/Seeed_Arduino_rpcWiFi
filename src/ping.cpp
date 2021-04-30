@@ -68,17 +68,17 @@
 
 #include "ping.h"
 
-#include "lwip/inet_chksum.h"
-#include "lwip/ip.h"
-//#include "lwip/ip4.h"
-#include "lwip/prot/ip4.h"
-#include "lwip/err.h"
-#include "lwip/icmp.h"
-//#include "lwip/sockets.h"
-//#include "lwip/sys.h"
-#include "lwip/netdb.h"
-#include "lwip/dns.h"
-#include "lwip/mem.h"
+#include "new_lwip/inet_chksum.h"
+#include "new_lwip/ip.h"
+//#include "new_lwip/ip4.h"
+#include "new_lwip/prot/ip4.h"
+#include "new_lwip/err.h"
+#include "new_lwip/icmp.h"
+//#include "new_lwip/sockets.h"
+//#include "new_lwip/sys.h"
+#include "new_lwip/netdb.h"
+#include "new_lwip/dns.h"
+#include "new_lwip/mem.h"
 static uint16_t ping_seq_num;
 static uint8_t stopped = 0;
 
@@ -210,9 +210,9 @@ static void ping_recv(int s) {
                 }
 
                 // Print ...
-               rpc_printf("%d bytes from %s: icmp_seq=%d time=%.3f ms\r\n", len, ipa,
+               /*rpc_printf("%d bytes from %s: icmp_seq=%d time=%.3f ms\r\n", len, ipa,
                      ntohs(iecho->seqno), elapsed
-               );
+               );*/
 
                 return;
             }
@@ -328,12 +328,11 @@ bool ping_start(IPAddress adr, int count=0, int interval=0, int size=0, int time
 
     closesocket(s);
 
-   rpc_printf("%d packets transmitted, %d packets received, %.1f%% packet loss\r\n",
+   /*rpc_printf("%d packets transmitted, %d packets received, %.1f%% packet loss\r\n",
          transmitted,
          received,
          ((((float)transmitted - (float)received) / (float)transmitted) * 100.0)
-   );
-    
+   );*/
     
     if (ping_o) {
         ping_resp pingresp;

@@ -16,15 +16,15 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#include "WiFiServer.h"
-#include "WiFi.h"
-#include <lwip/sockets.h>
-#include <lwip/netdb.h>
+#include "rpcWiFiServer.h"
+#include "rpcWiFi.h"
+#include <new_lwip/sockets.h>
+#include <new_lwip/netdb.h>
 
 #undef write
 #undef close
 
-int WiFiServer::setTimeout(uint32_t seconds){
+int rpcWiFiServer::setTimeout(uint32_t seconds){
   struct timeval tv;
   tv.tv_sec = seconds;
   tv.tv_usec = 0;
@@ -33,15 +33,15 @@ int WiFiServer::setTimeout(uint32_t seconds){
   return setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, (char *)&tv, sizeof(struct timeval));
 }
 
-size_t WiFiServer::write(const uint8_t *data, size_t len){
+size_t rpcWiFiServer::write(const uint8_t *data, size_t len){
   return 0;
 }
 
-void WiFiServer::stopAll(){}
+void rpcWiFiServer::stopAll(){}
 
-WiFiClient WiFiServer::available(){
+rpcWiFiClient rpcWiFiServer::available(){
   if(!_listening)
-    return WiFiClient();
+    return rpcWiFiClient();
   int client_sock;
   if (_accepted_sockfd >= 0) {
     client_sock = _accepted_sockfd;
@@ -57,13 +57,13 @@ WiFiClient WiFiServer::available(){
     if(setsockopt(client_sock, SOL_SOCKET, SO_KEEPALIVE, (char*)&val, sizeof(int)) == ESP_OK) {
       val = _noDelay;
       if(setsockopt(client_sock, IPPROTO_TCP, TCP_NODELAY, (char*)&val, sizeof(int)) == ESP_OK)
-        return WiFiClient(client_sock);
+        return rpcWiFiClient(client_sock);
     }
   }
-  return WiFiClient();
+  return rpcWiFiClient();
 }
 
-void WiFiServer::begin(uint16_t port){
+void rpcWiFiServer::begin(uint16_t port){
   if(_listening)
     return;
   if(port){
@@ -86,15 +86,15 @@ void WiFiServer::begin(uint16_t port){
   _accepted_sockfd = -1;
 }
 
-void WiFiServer::setNoDelay(bool nodelay) {
+void rpcWiFiServer::setNoDelay(bool nodelay) {
     _noDelay = nodelay;
 }
 
-bool WiFiServer::getNoDelay() {
+bool rpcWiFiServer::getNoDelay() {
     return _noDelay;
 }
 
-bool WiFiServer::hasClient() {
+bool rpcWiFiServer::hasClient() {
     if (_accepted_sockfd >= 0) {
       return true;
     }
@@ -107,17 +107,17 @@ bool WiFiServer::hasClient() {
     return false;
 }
 
-void WiFiServer::end(){
+void rpcWiFiServer::end(){
   lwip_close_r(sockfd);
   sockfd = -1;
   _listening = false;
 }
 
-void WiFiServer::close(){
+void rpcWiFiServer::close(){
   end();
 }
 
-void WiFiServer::stop(){
+void rpcWiFiServer::stop(){
   end();
 }
 

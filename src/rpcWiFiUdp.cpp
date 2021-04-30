@@ -16,16 +16,16 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#include "WiFiUdp.h"
-#include "WiFi.h"
+#include "rpcWiFiUdp.h"
+#include "rpcWiFi.h"
 
-#include "lwip/sockets.h"
-#include "lwip/netdb.h"
+#include "new_lwip/sockets.h"
+#include "new_lwip/netdb.h"
 
 #undef write
 #undef read
 
-WiFiUDP::WiFiUDP()
+rpcWiFiUDP::rpcWiFiUDP()
 : udp_server(-1)
 , server_port(0)
 , remote_port(0)
@@ -34,11 +34,11 @@ WiFiUDP::WiFiUDP()
 , rx_buffer(0)
 {}
 
-WiFiUDP::~WiFiUDP(){
+rpcWiFiUDP::~rpcWiFiUDP(){
    stop();
 }
 
-uint8_t WiFiUDP::begin(IPAddress address, uint16_t port){
+uint8_t rpcWiFiUDP::begin(IPAddress address, uint16_t port){
   stop();
 
   server_port = port;
@@ -75,11 +75,11 @@ uint8_t WiFiUDP::begin(IPAddress address, uint16_t port){
   return 1;
 }
 
-uint8_t WiFiUDP::begin(uint16_t p){
+uint8_t rpcWiFiUDP::begin(uint16_t p){
   return begin(IPAddress(INADDR_ANY), p);
 }
 
-uint8_t WiFiUDP::beginMulticast(IPAddress a, uint16_t p){
+uint8_t rpcWiFiUDP::beginMulticast(IPAddress a, uint16_t p){
   if(begin(IPAddress(INADDR_ANY), p)){
     if(a != 0){
       struct ip_mreq mreq;
@@ -97,7 +97,7 @@ uint8_t WiFiUDP::beginMulticast(IPAddress a, uint16_t p){
   return 0;
 }
 
-void WiFiUDP::stop(){
+void rpcWiFiUDP::stop(){
   if(tx_buffer){
     delete[] tx_buffer;
     tx_buffer = NULL;
@@ -121,7 +121,7 @@ void WiFiUDP::stop(){
   udp_server = -1;
 }
 
-int WiFiUDP::beginMulticastPacket(){
+int rpcWiFiUDP::beginMulticastPacket(){
   if(!server_port || multicast_ip == IPAddress(INADDR_ANY))
     return 0;
   remote_ip = multicast_ip;
@@ -129,7 +129,7 @@ int WiFiUDP::beginMulticastPacket(){
   return beginPacket();
 }
 
-int WiFiUDP::beginPacket(){
+int rpcWiFiUDP::beginPacket(){
   if(!remote_port)
     return 0;
 
@@ -158,13 +158,13 @@ int WiFiUDP::beginPacket(){
   return 1;
 }
 
-int WiFiUDP::beginPacket(IPAddress ip, uint16_t port){
+int rpcWiFiUDP::beginPacket(IPAddress ip, uint16_t port){
   remote_ip = ip;
   remote_port = port;
   return beginPacket();
 }
 
-int WiFiUDP::beginPacket(const char *host, uint16_t port){
+int rpcWiFiUDP::beginPacket(const char *host, uint16_t port){
   struct hostent *server;
   server = gethostbyname(host);
   if (server == NULL){
@@ -174,7 +174,7 @@ int WiFiUDP::beginPacket(const char *host, uint16_t port){
   return beginPacket(IPAddress((const uint8_t *)(server->h_addr_list[0])), port);
 }
 
-int WiFiUDP::endPacket(){
+int rpcWiFiUDP::endPacket(){
   struct sockaddr_in recipient;
   recipient.sin_addr.s_addr = (uint32_t)remote_ip;
   recipient.sin_family = AF_INET;
@@ -187,7 +187,7 @@ int WiFiUDP::endPacket(){
   return 1;
 }
 
-size_t WiFiUDP::write(uint8_t data){
+size_t rpcWiFiUDP::write(uint8_t data){
   if(tx_buffer_len == 1460){
     endPacket();
     tx_buffer_len = 0;
@@ -196,14 +196,14 @@ size_t WiFiUDP::write(uint8_t data){
   return 1;
 }
 
-size_t WiFiUDP::write(const uint8_t *buffer, size_t size){
+size_t rpcWiFiUDP::write(const uint8_t *buffer, size_t size){
   size_t i;
   for(i=0;i<size;i++)
     write(buffer[i]);
   return i;
 }
 
-int WiFiUDP::parsePacket(){
+int rpcWiFiUDP::parsePacket(){
   if(rx_buffer)
     return 0;
   struct sockaddr_in si_other;
@@ -230,12 +230,12 @@ int WiFiUDP::parsePacket(){
   return len;
 }
 
-int WiFiUDP::available(){
+int rpcWiFiUDP::available(){
   if(!rx_buffer) return 0;
   return rx_buffer->available();
 }
 
-int WiFiUDP::read(){
+int rpcWiFiUDP::read(){
   if(!rx_buffer) return -1;
   int out = rx_buffer->read();
   if(!rx_buffer->available()){
@@ -246,11 +246,11 @@ int WiFiUDP::read(){
   return out;
 }
 
-int WiFiUDP::read(unsigned char* buffer, size_t len){
+int rpcWiFiUDP::read(unsigned char* buffer, size_t len){
   return read((char *)buffer, len);
 }
 
-int WiFiUDP::read(char* buffer, size_t len){
+int rpcWiFiUDP::read(char* buffer, size_t len){
   if(!rx_buffer) return 0;
   int out = rx_buffer->read(buffer, len);
   if(!rx_buffer->available()){
@@ -261,22 +261,22 @@ int WiFiUDP::read(char* buffer, size_t len){
   return out;
 }
 
-int WiFiUDP::peek(){
+int rpcWiFiUDP::peek(){
   if(!rx_buffer) return -1;
   return rx_buffer->peek();
 }
 
-void WiFiUDP::flush(){
+void rpcWiFiUDP::flush(){
   if(!rx_buffer) return;
   cbuf *b = rx_buffer;
   rx_buffer = 0;
   delete b;
 }
 
-IPAddress WiFiUDP::remoteIP(){
+IPAddress rpcWiFiUDP::remoteIP(){
   return remote_ip;
 }
 
-uint16_t WiFiUDP::remotePort(){
+uint16_t rpcWiFiUDP::remotePort(){
   return remote_port;
 }

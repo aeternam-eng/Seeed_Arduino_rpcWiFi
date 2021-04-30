@@ -18,11 +18,11 @@
  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _ETH_H_
-#define _ETH_H_
+#ifndef _RPCETH_H_
+#define _RPCETH_H_
 
-#include "WiFi.h"
-#include "esp_eth.h"
+#include "rpcWiFi.h"
+#include "esp/esp_eth.h"
 
 #ifndef ETH_PHY_ADDR
 #define ETH_PHY_ADDR 0
@@ -86,8 +86,8 @@ class ETHClass {
         uint8_t * macAddress(uint8_t* mac);
         String macAddress();
 
-        friend class WiFiClient;
-        friend class WiFiServer;
+        friend class rpcWiFiClient;
+        friend class rpcWiFiServer;
 };
 
 extern ETHClass ETH;

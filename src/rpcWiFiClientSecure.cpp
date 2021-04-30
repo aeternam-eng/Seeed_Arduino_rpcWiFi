@@ -1,5 +1,5 @@
 /*
-  WiFiClientSecure.cpp - Client Secure class for ESP32
+  rpcWiFiClientSecure.cpp - Client Secure class for ESP32
   Copyright (c) 2016 Hristo Gochkov  All right reserved.
   Additions Copyright (C) 2017 Evandro Luis Copercini.
 
@@ -18,9 +18,9 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include "WiFiClientSecure.h"
-#include <lwip/sockets.h>
-#include <lwip/netdb.h>
+#include "rpcWiFiClientSecure.h"
+#include <new_lwip/sockets.h>
+#include <new_lwip/netdb.h>
 #include <errno.h>
 
 #define WIFI_CLIENT_SECURE_KEEPALIVE_TIMEOUT (500)
@@ -29,7 +29,7 @@
 #undef write
 #undef read
 
-class WiFiClientSecureRxBuffer
+class rpcWiFiClientSecureRxBuffer
 {
 private:
     size_t _size;
@@ -88,13 +88,13 @@ private:
     }
 
 public:
-    WiFiClientSecureRxBuffer(sslclient_context *sslclient, size_t size = 1024)
+    rpcWiFiClientSecureRxBuffer(sslclient_context *sslclient, size_t size = 1024)
         : _size(size), _buffer(NULL), _pos(0), _fill(0), _sslclient(sslclient), _failed(false)
     {
         //_buffer = (uint8_t *)malloc(_size);
     }
 
-    ~WiFiClientSecureRxBuffer()
+    ~rpcWiFiClientSecureRxBuffer()
     {
         free(_buffer);
     }
@@ -165,7 +165,7 @@ public:
     }
 };
 
-WiFiClientSecure::WiFiClientSecure()
+rpcWiFiClientSecure::rpcWiFiClientSecure()
 {
     _connected = false;
     _CA_cert = NULL;
@@ -176,7 +176,7 @@ WiFiClientSecure::WiFiClientSecure()
     next = NULL;
 }
 
-WiFiClientSecure::WiFiClientSecure(int sock)
+rpcWiFiClientSecure::rpcWiFiClientSecure(int sock)
 {
     _connected = false;
 
@@ -193,12 +193,12 @@ WiFiClientSecure::WiFiClientSecure(int sock)
     next = NULL;
 }
 
-WiFiClientSecure::~WiFiClientSecure()
+rpcWiFiClientSecure::~rpcWiFiClientSecure()
 {
     stop();
 }
 
-WiFiClientSecure &WiFiClientSecure::operator=(const WiFiClientSecure &other)
+rpcWiFiClientSecure &rpcWiFiClientSecure::operator=(const rpcWiFiClientSecure &other)
 {
     stop();
     _socket = other._socket;
@@ -206,7 +206,7 @@ WiFiClientSecure &WiFiClientSecure::operator=(const WiFiClientSecure &other)
     return *this;
 }
 
-void WiFiClientSecure::stop()
+void rpcWiFiClientSecure::stop()
 {
     if (_socket >= 0)
     {
@@ -224,43 +224,43 @@ void WiFiClientSecure::stop()
     }
 }
 
-int WiFiClientSecure::connect(IPAddress ip, uint16_t port)
+int rpcWiFiClientSecure::connect(IPAddress ip, uint16_t port)
 {
     if (_pskIdent && _psKey)
         return connect(ip, port, _pskIdent, _psKey);
     return connect(ip, port, _CA_cert, _cert, _private_key);
 }
 
-int WiFiClientSecure::connect(IPAddress ip, uint16_t port, int32_t timeout)
+int rpcWiFiClientSecure::connect(IPAddress ip, uint16_t port, int32_t timeout)
 {
     _timeout = timeout;
     return connect(ip, port);
 }
 
-int WiFiClientSecure::connect(const char *host, uint16_t port)
+int rpcWiFiClientSecure::connect(const char *host, uint16_t port)
 {
     if (_pskIdent && _psKey)
         return connect(host, port, _pskIdent, _psKey);
     return connect(host, port, _CA_cert, _cert, _private_key);
 }
 
-int WiFiClientSecure::connect(const char *host, uint16_t port, int32_t timeout)
+int rpcWiFiClientSecure::connect(const char *host, uint16_t port, int32_t timeout)
 {
     _timeout = timeout;
     return connect(host, port);
 }
 
-int WiFiClientSecure::connect(IPAddress ip, uint16_t port, const char *_CA_cert, const char *_cert, const char *_private_key)
+int rpcWiFiClientSecure::connect(IPAddress ip, uint16_t port, const char *_CA_cert, const char *_cert, const char *_private_key)
 {
     return connect(ip.toString().c_str(), port, _CA_cert, _cert, _private_key);
 }
 
-int WiFiClientSecure::connect(const char *host, uint16_t port, const char *_CA_cert, const char *_cert, const char *_private_key)
+int rpcWiFiClientSecure::connect(const char *host, uint16_t port, const char *_CA_cert, const char *_cert, const char *_private_key)
 {
     if (sslclient == NULL)
     {
         sslclient = ssl_client_create();
-        _rxBuffer.reset(new WiFiClientSecureRxBuffer(sslclient));
+        _rxBuffer.reset(new rpcWiFiClientSecureRxBuffer(sslclient));
         if (sslclient == NULL)
         {
             log_e("ssl_client_create: error");
@@ -286,18 +286,18 @@ int WiFiClientSecure::connect(const char *host, uint16_t port, const char *_CA_c
     return 1;
 }
 
-int WiFiClientSecure::connect(IPAddress ip, uint16_t port, const char *pskIdent, const char *psKey)
+int rpcWiFiClientSecure::connect(IPAddress ip, uint16_t port, const char *pskIdent, const char *psKey)
 {
     return connect(ip.toString().c_str(), port, _pskIdent, _psKey);
 }
 
-int WiFiClientSecure::connect(const char *host, uint16_t port, const char *pskIdent, const char *psKey)
+int rpcWiFiClientSecure::connect(const char *host, uint16_t port, const char *pskIdent, const char *psKey)
 {
     log_v("start_ssl_client with PSK");
     if (sslclient == NULL)
     {
         sslclient = ssl_client_create();
-        _rxBuffer.reset(new WiFiClientSecureRxBuffer(sslclient));
+        _rxBuffer.reset(new rpcWiFiClientSecureRxBuffer(sslclient));
         if (sslclient == NULL)
         {
             log_e("ssl_client_create: error");
@@ -324,7 +324,7 @@ int WiFiClientSecure::connect(const char *host, uint16_t port, const char *pskId
     return 1;
 }
 
-int WiFiClientSecure::peek()
+int rpcWiFiClientSecure::peek()
 {
     int res = _rxBuffer->peek();
     if (_rxBuffer->failed())
@@ -335,12 +335,12 @@ int WiFiClientSecure::peek()
     return res;
 }
 
-size_t WiFiClientSecure::write(uint8_t data)
+size_t rpcWiFiClientSecure::write(uint8_t data)
 {
     return write(&data, 1);
 }
 
-int WiFiClientSecure::read()
+int rpcWiFiClientSecure::read()
 {
     uint8_t data = -1;
     int res = read(&data, 1);
@@ -351,7 +351,7 @@ int WiFiClientSecure::read()
     return data;
 }
 
-size_t WiFiClientSecure::write(const uint8_t *buf, size_t size)
+size_t rpcWiFiClientSecure::write(const uint8_t *buf, size_t size)
 {
     if (!_connected)
     {
@@ -366,7 +366,7 @@ size_t WiFiClientSecure::write(const uint8_t *buf, size_t size)
     return res;
 }
 
-int WiFiClientSecure::read(uint8_t *buf, size_t size)
+int rpcWiFiClientSecure::read(uint8_t *buf, size_t size)
 {
     int res = -1;
     res = _rxBuffer->read(buf, size);
@@ -378,7 +378,7 @@ int WiFiClientSecure::read(uint8_t *buf, size_t size)
     return res;
 }
 
-int WiFiClientSecure::available()
+int rpcWiFiClientSecure::available()
 {
     if (!_rxBuffer)
     {
@@ -393,7 +393,7 @@ int WiFiClientSecure::available()
     return res;
 }
 
-uint8_t WiFiClientSecure::connected()
+uint8_t rpcWiFiClientSecure::connected()
 {
 
     uint32_t interval = millis() - conn_staus;
@@ -429,28 +429,28 @@ uint8_t WiFiClientSecure::connected()
     return _connected;
 }
 
-void WiFiClientSecure::setCACert(const char *rootCA)
+void rpcWiFiClientSecure::setCACert(const char *rootCA)
 {
     _CA_cert = rootCA;
 }
 
-void WiFiClientSecure::setCertificate(const char *client_ca)
+void rpcWiFiClientSecure::setCertificate(const char *client_ca)
 {
     _cert = client_ca;
 }
 
-void WiFiClientSecure::setPrivateKey(const char *private_key)
+void rpcWiFiClientSecure::setPrivateKey(const char *private_key)
 {
     _private_key = private_key;
 }
 
-void WiFiClientSecure::setPreSharedKey(const char *pskIdent, const char *psKey)
+void rpcWiFiClientSecure::setPreSharedKey(const char *pskIdent, const char *psKey)
 {
     _pskIdent = pskIdent;
     _psKey = psKey;
 }
 
-bool WiFiClientSecure::verify(const char *fp, const char *domain_name)
+bool rpcWiFiClientSecure::verify(const char *fp, const char *domain_name)
 {
     if (!sslclient)
         return false;
@@ -458,7 +458,7 @@ bool WiFiClientSecure::verify(const char *fp, const char *domain_name)
     return verify_ssl_fingerprint(sslclient, fp, domain_name);
 }
 
-char *WiFiClientSecure::_streamLoad(Stream &stream, size_t size)
+char *rpcWiFiClientSecure::_streamLoad(Stream &stream, size_t size)
 {
     char *dest = (char *)malloc(size + 1);
     if (!dest)
@@ -475,7 +475,7 @@ char *WiFiClientSecure::_streamLoad(Stream &stream, size_t size)
     return dest;
 }
 
-bool WiFiClientSecure::loadCACert(Stream &stream, size_t size)
+bool rpcWiFiClientSecure::loadCACert(Stream &stream, size_t size)
 {
     char *dest = _streamLoad(stream, size);
     bool ret = false;
@@ -487,7 +487,7 @@ bool WiFiClientSecure::loadCACert(Stream &stream, size_t size)
     return ret;
 }
 
-bool WiFiClientSecure::loadCertificate(Stream &stream, size_t size)
+bool rpcWiFiClientSecure::loadCertificate(Stream &stream, size_t size)
 {
     char *dest = _streamLoad(stream, size);
     bool ret = false;
@@ -499,7 +499,7 @@ bool WiFiClientSecure::loadCertificate(Stream &stream, size_t size)
     return ret;
 }
 
-bool WiFiClientSecure::loadPrivateKey(Stream &stream, size_t size)
+bool rpcWiFiClientSecure::loadPrivateKey(Stream &stream, size_t size)
 {
     char *dest = _streamLoad(stream, size);
     bool ret = false;
@@ -511,7 +511,7 @@ bool WiFiClientSecure::loadPrivateKey(Stream &stream, size_t size)
     return ret;
 }
 
-int WiFiClientSecure::lastError(char *buf, const size_t size)
+int rpcWiFiClientSecure::lastError(char *buf, const size_t size)
 {
     if (!_lastError)
     {
@@ -523,12 +523,12 @@ int WiFiClientSecure::lastError(char *buf, const size_t size)
     return _lastError;
 }
 
-void WiFiClientSecure::setHandshakeTimeout(unsigned long handshake_timeout)
+void rpcWiFiClientSecure::setHandshakeTimeout(unsigned long handshake_timeout)
 {
     ssl_set_timeout(sslclient, handshake_timeout * 1000);
 }
 
-int WiFiClientSecure::fd() const
+int rpcWiFiClientSecure::fd() const
 {
     return _socket;
 }

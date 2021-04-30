@@ -22,9 +22,9 @@
 
  */
 
-#include "WiFi.h"
-#include "WiFiGeneric.h"
-#include "WiFiScan.h"
+#include "rpcWiFi.h"
+#include "rpcWiFiGeneric.h"
+#include "rpcWiFiScan.h"
 
 extern "C"
 {
@@ -36,11 +36,11 @@ extern "C"
 #include <string.h>
 }
 
-bool WiFiScanClass::_scanAsync = false;
-uint32_t WiFiScanClass::_scanStarted = 0;
-uint32_t WiFiScanClass::_scanTimeout = 10000;
-uint16_t WiFiScanClass::_scanCount = 0;
-void *WiFiScanClass::_scanResult = 0;
+bool rpcWiFiScanClass::_scanAsync = false;
+uint32_t rpcWiFiScanClass::_scanStarted = 0;
+uint32_t rpcWiFiScanClass::_scanTimeout = 10000;
+uint16_t rpcWiFiScanClass::_scanCount = 0;
+void *rpcWiFiScanClass::_scanResult = 0;
 
 /**
  * Start scan WiFi networks available
@@ -48,17 +48,17 @@ void *WiFiScanClass::_scanResult = 0;
  * @param show_hidden   show hidden networks
  * @return Number of discovered networks
  */
-int16_t WiFiScanClass::scanNetworks(bool async, bool show_hidden, bool passive, uint32_t max_ms_per_chan)
+int16_t rpcWiFiScanClass::scanNetworks(bool async, bool show_hidden, bool passive, uint32_t max_ms_per_chan)
 {
-    if (WiFiGenericClass::getStatusBits() & WIFI_SCANNING_BIT)
+    if (rpcWiFiGenericClass::getStatusBits() & RPC_WIFI_SCANNING_BIT)
     {
         return WIFI_SCAN_RUNNING;
     }
 
-    WiFiScanClass::_scanTimeout = max_ms_per_chan * 20;
-    WiFiScanClass::_scanAsync = async;
+    rpcWiFiScanClass::_scanTimeout = max_ms_per_chan * 20;
+    rpcWiFiScanClass::_scanAsync = async;
 
-    WiFi.enableSTA(true);
+    rpcWiFi.enableSTA(true);
 
     scanDelete();
 
@@ -83,16 +83,16 @@ int16_t WiFiScanClass::scanNetworks(bool async, bool show_hidden, bool passive, 
             ++_scanStarted;
         }
 
-        WiFiGenericClass::clearStatusBits(WIFI_SCAN_DONE_BIT);
-        WiFiGenericClass::setStatusBits(WIFI_SCANNING_BIT);
+        rpcWiFiGenericClass::clearStatusBits(RPC_WIFI_SCAN_DONE_BIT);
+        rpcWiFiGenericClass::setStatusBits(RPC_WIFI_SCANNING_BIT);
 
-        if (WiFiScanClass::_scanAsync)
+        if (rpcWiFiScanClass::_scanAsync)
         {
             return WIFI_SCAN_RUNNING;
         }
-        if (WiFiGenericClass::waitStatusBits(WIFI_SCAN_DONE_BIT, 10000))
+        if (rpcWiFiGenericClass::waitStatusBits(RPC_WIFI_SCAN_DONE_BIT, 10000))
         {
-            return (int16_t)WiFiScanClass::_scanCount;
+            return (int16_t)rpcWiFiScanClass::_scanCount;
         }
     }
     return WIFI_SCAN_FAILED;
@@ -104,20 +104,20 @@ int16_t WiFiScanClass::scanNetworks(bool async, bool show_hidden, bool passive, 
  * @param result  void *arg
  * @param status STATUS
  */
-void WiFiScanClass::_scanDone()
+void rpcWiFiScanClass::_scanDone()
 {
-    WiFiScanClass::_scanCount = wifi_scan_get_ap_num();
-    if (WiFiScanClass::_scanCount)
+    rpcWiFiScanClass::_scanCount = wifi_scan_get_ap_num();
+    if (rpcWiFiScanClass::_scanCount)
     {
-        WiFiScanClass::_scanResult = new wifi_ap_record_t[WiFiScanClass::_scanCount];
-        if (!WiFiScanClass::_scanResult || wifi_scan_get_ap_records(WiFiScanClass::_scanCount, (wifi_ap_record_t *)_scanResult) != RTW_SUCCESS)
+        rpcWiFiScanClass::_scanResult = new wifi_ap_record_t[rpcWiFiScanClass::_scanCount];
+        if (!rpcWiFiScanClass::_scanResult || wifi_scan_get_ap_records(rpcWiFiScanClass::_scanCount, (wifi_ap_record_t *)_scanResult) != RTW_SUCCESS)
         {
-            WiFiScanClass::_scanCount = 0;
+            rpcWiFiScanClass::_scanCount = 0;
         }
     }
-    WiFiScanClass::_scanStarted = 0; //Reset after a scan is completed for normal behavior
-    WiFiGenericClass::setStatusBits(WIFI_SCAN_DONE_BIT);
-    WiFiGenericClass::clearStatusBits(WIFI_SCANNING_BIT);
+    rpcWiFiScanClass::_scanStarted = 0; //Reset after a scan is completed for normal behavior
+    rpcWiFiGenericClass::setStatusBits(RPC_WIFI_SCAN_DONE_BIT);
+    rpcWiFiGenericClass::clearStatusBits(RPC_WIFI_SCANNING_BIT);
 }
 
 /**
@@ -125,13 +125,13 @@ void WiFiScanClass::_scanDone()
  * @param i specify from which network item want to get the information
  * @return bss_info *
  */
-void *WiFiScanClass::_getScanInfoByIndex(int i)
+void *rpcWiFiScanClass::_getScanInfoByIndex(int i)
 {
-    if (!WiFiScanClass::_scanResult || (size_t)i >= WiFiScanClass::_scanCount)
+    if (!rpcWiFiScanClass::_scanResult || (size_t)i >= rpcWiFiScanClass::_scanCount)
     {
         return 0;
     }
-    return reinterpret_cast<wifi_ap_record_t *>(WiFiScanClass::_scanResult) + i;
+    return reinterpret_cast<wifi_ap_record_t *>(rpcWiFiScanClass::_scanResult) + i;
 }
 
 /**
@@ -140,20 +140,20 @@ void *WiFiScanClass::_getScanInfoByIndex(int i)
  *          -1 if scan not fin
  *          -2 if scan not triggered
  */
-int16_t WiFiScanClass::scanComplete()
+int16_t rpcWiFiScanClass::scanComplete()
 {
-    if (WiFiScanClass::_scanStarted && (millis() - WiFiScanClass::_scanStarted) > WiFiScanClass::_scanTimeout)
+    if (rpcWiFiScanClass::_scanStarted && (millis() - rpcWiFiScanClass::_scanStarted) > rpcWiFiScanClass::_scanTimeout)
     { //Check is scan was started and if the delay expired, return WIFI_SCAN_FAILED in this case
-        WiFiGenericClass::clearStatusBits(WIFI_SCANNING_BIT);
+        rpcWiFiGenericClass::clearStatusBits(RPC_WIFI_SCANNING_BIT);
         return WIFI_SCAN_FAILED;
     }
 
-    if (WiFiGenericClass::getStatusBits() & WIFI_SCAN_DONE_BIT)
+    if (rpcWiFiGenericClass::getStatusBits() & RPC_WIFI_SCAN_DONE_BIT)
     {
-        return WiFiScanClass::_scanCount;
+        return rpcWiFiScanClass::_scanCount;
     }
 
-    if (WiFiGenericClass::getStatusBits() & WIFI_SCANNING_BIT)
+    if (rpcWiFiGenericClass::getStatusBits() & RPC_WIFI_SCANNING_BIT)
     {
         return WIFI_SCAN_RUNNING;
     }
@@ -164,14 +164,14 @@ int16_t WiFiScanClass::scanComplete()
 /**
  * delete last scan result from RAM
  */
-void WiFiScanClass::scanDelete()
+void rpcWiFiScanClass::scanDelete()
 {
-    WiFiGenericClass::clearStatusBits(WIFI_SCAN_DONE_BIT);
-    if (WiFiScanClass::_scanResult)
+    rpcWiFiGenericClass::clearStatusBits(RPC_WIFI_SCAN_DONE_BIT);
+    if (rpcWiFiScanClass::_scanResult)
     {
-        delete[] reinterpret_cast<wifi_ap_record_t *>(WiFiScanClass::_scanResult);
-        WiFiScanClass::_scanResult = 0;
-        WiFiScanClass::_scanCount = 0;
+        delete[] reinterpret_cast<wifi_ap_record_t *>(rpcWiFiScanClass::_scanResult);
+        rpcWiFiScanClass::_scanResult = 0;
+        rpcWiFiScanClass::_scanCount = 0;
     }
 }
 
@@ -185,7 +185,7 @@ void WiFiScanClass::scanDelete()
  * @param channel int32_t *
  * @return (true if ok)
  */
-bool WiFiScanClass::getNetworkInfo(uint8_t i, String &ssid, uint8_t &encType, int32_t &rssi, uint8_t *&bssid, int32_t &channel)
+bool rpcWiFiScanClass::getNetworkInfo(uint8_t i, String &ssid, uint8_t &encType, int32_t &rssi, uint8_t *&bssid, int32_t &channel)
 {
     wifi_ap_record_t *it = reinterpret_cast<wifi_ap_record_t *>(_getScanInfoByIndex(i));
     if (!it)
@@ -205,7 +205,7 @@ bool WiFiScanClass::getNetworkInfo(uint8_t i, String &ssid, uint8_t &encType, in
  * @param i     specify from which network item want to get the information
  * @return       ssid string of the specified item on the networks scanned list
  */
-String WiFiScanClass::SSID(uint8_t i)
+String rpcWiFiScanClass::SSID(uint8_t i)
 {
     wifi_ap_record_t *it = reinterpret_cast<wifi_ap_record_t *>(_getScanInfoByIndex(i));
     if (!it)
@@ -220,7 +220,7 @@ String WiFiScanClass::SSID(uint8_t i)
  * @param i specify from which network item want to get the information
  * @return  encryption type (enum wl_enc_type) of the specified item on the networks scanned list
  */
-wifi_auth_mode_t WiFiScanClass::encryptionType(uint8_t i)
+wifi_auth_mode_t rpcWiFiScanClass::encryptionType(uint8_t i)
 {
     wifi_ap_record_t *it = reinterpret_cast<wifi_ap_record_t *>(_getScanInfoByIndex(i));
     if (!it)
@@ -235,7 +235,7 @@ wifi_auth_mode_t WiFiScanClass::encryptionType(uint8_t i)
  * @param i specify from which network item want to get the information
  * @return  signed value of RSSI of the specified item on the networks scanned list
  */
-int32_t WiFiScanClass::RSSI(uint8_t i)
+int32_t rpcWiFiScanClass::RSSI(uint8_t i)
 {
     wifi_ap_record_t *it = reinterpret_cast<wifi_ap_record_t *>(_getScanInfoByIndex(i));
     if (!it)
@@ -250,7 +250,7 @@ int32_t WiFiScanClass::RSSI(uint8_t i)
  * @param i specify from which network item want to get the information
  * @return uint8_t * MAC / BSSID of scanned wifi
  */
-uint8_t *WiFiScanClass::BSSID(uint8_t i)
+uint8_t *rpcWiFiScanClass::BSSID(uint8_t i)
 {
     wifi_ap_record_t *it = reinterpret_cast<wifi_ap_record_t *>(_getScanInfoByIndex(i));
     if (!it)
@@ -265,7 +265,7 @@ uint8_t *WiFiScanClass::BSSID(uint8_t i)
  * @param i specify from which network item want to get the information
  * @return String MAC / BSSID of scanned wifi
  */
-String WiFiScanClass::BSSIDstr(uint8_t i)
+String rpcWiFiScanClass::BSSIDstr(uint8_t i)
 {
     char mac[18] = {0};
     wifi_ap_record_t *it = reinterpret_cast<wifi_ap_record_t *>(_getScanInfoByIndex(i));
@@ -277,7 +277,7 @@ String WiFiScanClass::BSSIDstr(uint8_t i)
     return String(mac);
 }
 
-int32_t WiFiScanClass::channel(uint8_t i)
+int32_t rpcWiFiScanClass::channel(uint8_t i)
 {
     wifi_ap_record_t *it = reinterpret_cast<wifi_ap_record_t *>(_getScanInfoByIndex(i));
     if (!it)

@@ -20,13 +20,13 @@
  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef ESP32WIFISCAN_H_
-#define ESP32WIFISCAN_H_
+#ifndef RPCESP32WIFISCAN_H_
+#define RPCESP32WIFISCAN_H_
 
 #include "WiFiType.h"
-#include "WiFiGeneric.h"
+#include "rpcWiFiGeneric.h"
 
-class WiFiScanClass
+class rpcWiFiScanClass
 {
 
 public:

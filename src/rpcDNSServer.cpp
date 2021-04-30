@@ -1,5 +1,5 @@
-#include "DNSServer.h"
-#include <lwip/def.h>
+#include "rpcDNSServer.h"
+#include <new_lwip/def.h>
 #include <Arduino.h>
 
 

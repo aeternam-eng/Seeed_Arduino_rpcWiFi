@@ -1,6 +1,6 @@
 /**
  *
- * @file WiFiMulti.cpp
+ * @file rpcWiFiMulti.cpp
  * @date 16.05.2015
  * @author Markus Sattler
  *
@@ -23,19 +23,19 @@
  *
  */
 
-#include "WiFiMulti.h"
+#include "rpcWiFiMulti.h"
 #include <limits.h>
 #include <string.h>
 
 
-WiFiMulti::WiFiMulti()
+rpcWiFiMulti::rpcWiFiMulti()
 {
 }
 
-WiFiMulti::~WiFiMulti()
+rpcWiFiMulti::~rpcWiFiMulti()
 {
     for(uint32_t i = 0; i < APlist.size(); i++) {
-        WifiAPlist_t entry = APlist[i];
+        rpcWifiAPlist_t entry = APlist[i];
         if(entry.ssid) {
             free(entry.ssid);
         }
@@ -46,9 +46,9 @@ WiFiMulti::~WiFiMulti()
     APlist.clear();
 }
 
-bool WiFiMulti::addAP(const char* ssid, const char *passphrase)
+bool rpcWiFiMulti::addAP(const char* ssid, const char *passphrase)
 {
-    WifiAPlist_t newAP;
+    rpcWifiAPlist_t newAP;
 
     if(!ssid || *ssid == 0x00 || strlen(ssid) > 31) {
         // fail SSID too long or missing!
@@ -85,7 +85,7 @@ bool WiFiMulti::addAP(const char* ssid, const char *passphrase)
     return true;
 }
 
-uint8_t WiFiMulti::run(uint32_t connectTimeout)
+uint8_t rpcWiFiMulti::run(uint32_t connectTimeout)
 {
     int8_t scanResult;
     uint8_t status = WiFi.status();
@@ -106,7 +106,7 @@ uint8_t WiFiMulti::run(uint32_t connectTimeout)
         return WL_NO_SSID_AVAIL;
     } else if(scanResult >= 0) {
         // scan done analyze
-        WifiAPlist_t bestNetwork { NULL, NULL };
+        rpcWifiAPlist_t bestNetwork { NULL, NULL };
         int bestNetworkDb = INT_MIN;
         uint8_t bestBSSID[6];
         int32_t bestChannel = 0;
@@ -129,7 +129,7 @@ uint8_t WiFiMulti::run(uint32_t connectTimeout)
 
                 bool known = false;
                 for(uint32_t x = 0; x < APlist.size(); x++) {
-                    WifiAPlist_t entry = APlist[x];
+                    rpcWifiAPlist_t entry = APlist[x];
 
                     if(ssid_scan == entry.ssid) { // SSID match
                         known = true;

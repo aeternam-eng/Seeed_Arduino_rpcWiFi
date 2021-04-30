@@ -1,6 +1,6 @@
-#ifndef DNSServer_h
-#define DNSServer_h
-#include <WiFiUdp.h>
+#ifndef RPCDNSServer_h
+#define RPCDNSServer_h
+#include <rpcWiFiUdp.h>
 
 #define DNS_QR_QUERY 0
 #define DNS_QR_RESPONSE 1
@@ -88,7 +88,7 @@ class DNSServer
     void stop();
 
   private:
-    WiFiUDP _udp;
+    rpcWiFiUDP _udp;
     uint16_t _port;
     String _domainName;
     unsigned char _resolvedIP[4];

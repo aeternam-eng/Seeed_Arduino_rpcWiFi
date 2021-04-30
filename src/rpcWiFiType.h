@@ -20,8 +20,8 @@
  */
 
 
-#ifndef ESP32WIFITYPE_H_
-#define ESP32WIFITYPE_H_
+#ifndef RPCESP32WIFITYPE_H_
+#define RPCESP32WIFITYPE_H_
 
 #define WIFI_SCAN_RUNNING   (-1)
 #define WIFI_SCAN_FAILED    (-2)
@@ -36,7 +36,7 @@
 #define WiFiEventInfo_t system_event_info_t
 #define WiFiEventId_t wifi_event_id_t
 
-typedef enum {
+typedef enum  {
     WL_NO_SHIELD        = 255,   // for compatibility with WiFi Shield library
     WL_IDLE_STATUS      = 0,
     WL_NO_SSID_AVAIL    = 1,

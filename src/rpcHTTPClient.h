@@ -1,10 +1,10 @@
 /**
- * HTTPClient.h
+ * rpcHTTPClient.h
  *
  * Created on: 02.11.2015
  *
  * Copyright (c) 2015 Markus Sattler. All rights reserved.
- * This file is part of the HTTPClient for Arduino.
+ * This file is part of the rpcHTTPClient for Arduino.
  * Port to ESP32 by Evandro Luis Copercini (2017), 
  * changed fingerprints to CA verification. 	
  *
@@ -24,16 +24,16 @@
  *
  */
 
-#ifndef HTTPClient_H_
-#define HTTPClient_H_
+#ifndef RPCHTTPClient_H_
+#define RPCHTTPClient_H_
 
 #define HTTPCLIENT_1_1_COMPATIBLE
 
 #include <memory>
 #include <Arduino.h>
 #include <rpcWiFi.h>
-#include <WiFiClient.h>
-#include <WiFiClientSecure.h>
+#include <rpcWiFiClient.h>
+#include <rpcWiFiClientSecure.h>
 
 #define HTTPCLIENT_DEFAULT_TCP_TIMEOUT (5000)
 
@@ -139,22 +139,22 @@ typedef enum {
 
 
 #ifdef HTTPCLIENT_1_1_COMPATIBLE
-class TransportTraits;
-typedef std::unique_ptr<TransportTraits> TransportTraitsPtr;
+class rpcTransportTraits;
+typedef std::unique_ptr<rpcTransportTraits> TransportTraitsPtr;
 #endif
 
-class HTTPClient
+class rpcHTTPClient
 {
 public:
-    HTTPClient();
-    ~HTTPClient();
+    rpcHTTPClient();
+    ~rpcHTTPClient();
 
 /*
  * Since both begin() functions take a reference to client as a parameter, you need to 
- * ensure the client object lives the entire time of the HTTPClient
+ * ensure the client object lives the entire time of the rpcHTTPClient
  */
-    bool begin(WiFiClient &client, String url);
-    bool begin(WiFiClient &client, String host, uint16_t port, String uri = "/", bool https = false);
+    bool begin(rpcWiFiClient &client, String url);
+    bool begin(rpcWiFiClient &client, String host, uint16_t port, String uri = "/", bool https = false);
 
 #ifdef HTTPCLIENT_1_1_COMPATIBLE
     bool begin(String url);
@@ -208,8 +208,8 @@ public:
     int getSize(void);
     const String &getLocation(void);
 
-    WiFiClient& getStream(void);
-    WiFiClient* getStreamPtr(void);
+    rpcWiFiClient& getStream(void);
+    rpcWiFiClient* getStreamPtr(void);
     int writeToStream(Stream* stream);
     String getString(void);
 
@@ -233,10 +233,10 @@ protected:
 
 #ifdef HTTPCLIENT_1_1_COMPATIBLE
     TransportTraitsPtr _transportTraits;
-    std::unique_ptr<WiFiClient> _tcpDeprecated;
+    std::unique_ptr<rpcWiFiClient> _tcpDeprecated;
 #endif
 
-    WiFiClient* _client = nullptr;
+    rpcWiFiClient* _client = nullptr;
 
     /// request handling
     String _host;

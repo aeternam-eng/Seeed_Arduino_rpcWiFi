@@ -21,7 +21,7 @@
 #define RPCPING_H
 
 #include <Arduino.h>
-#include <WiFi.h>
+#include <rpcWiFi.h>
 
 //extern "C" {
 #include "ping.h"

@@ -22,10 +22,10 @@
 // #include "eth_phy/phy.h"
 // #include "eth_phy/phy_tlk110.h"
 // #include "eth_phy/phy_lan8720.h"
-// #include "lwip/err.h"
-// #include "lwip/dns.h"
+// #include "new_lwip/err.h"
+// #include "new_lwip/dns.h"
 
-// extern void tcpipInit();
+// extern void new_tcpipInit();
 
 // static int _eth_phy_mdc_pin = -1;
 // static int _eth_phy_mdio_pin = -1;
@@ -92,7 +92,7 @@
 //         eth_config.phy_power_enable = _eth_phy_power_enable;
 //     }
 
-//     tcpipInit();
+//     new_tcpipInit();
 //     err = esp_eth_init(&eth_config);
 //     if(!err){
 //         initialized = true;
@@ -112,7 +112,7 @@
 // bool ETHClass::config(IPAddress local_ip, IPAddress gateway, IPAddress subnet, IPAddress dns1, IPAddress dns2)
 // {
 //     esp_err_t err = ESP_OK;
-//     tcpip_adapter_ip_info_t info;
+//     rpc_tcpip_adapter_ip_info_t info;
 	
 //     if(local_ip != (uint32_t)0x00000000){
 //         info.ip.addr = static_cast<uint32_t>(local_ip);
@@ -124,13 +124,13 @@
 //         info.netmask.addr = 0;
 // 	}
 
-//     err = tcpip_adapter_dhcpc_stop(TCPIP_ADAPTER_IF_ETH);
+//     err = new_tcpip_adapter_dhcpc_stop(RPC_TCPIP_ADAPTER_IF_ETH);
 //     if(err != ESP_OK && err != ESP_ERR_TCPIP_ADAPTER_DHCP_ALREADY_STOPPED){
 //         log_e("DHCP could not be stopped! Error: %d", err);
 //         return false;
 //     }
 
-//     err = tcpip_adapter_set_ip_info(TCPIP_ADAPTER_IF_ETH, &info);
+//     err = new_tcpip_adapter_set_ip_info(RPC_TCPIP_ADAPTER_IF_ETH, &info);
 //     if(err != ERR_OK){
 //         log_e("STA IP could not be configured! Error: %d", err);
 //         return false;
@@ -138,7 +138,7 @@
 //     if(info.ip.addr){
 //         staticIP = true;
 //     } else {
-//         err = tcpip_adapter_dhcpc_start(TCPIP_ADAPTER_IF_ETH);
+//         err = new_tcpip_adapter_dhcpc_start(RPC_TCPIP_ADAPTER_IF_ETH);
 //         if(err != ESP_OK && err != ESP_ERR_TCPIP_ADAPTER_DHCP_ALREADY_STARTED){
 //             log_w("DHCP could not be started! Error: %d", err);
 //             return false;
@@ -166,8 +166,8 @@
 
 // IPAddress ETHClass::localIP()
 // {
-//     tcpip_adapter_ip_info_t ip;
-//     if(tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_ETH, &ip)){
+//     rpc_tcpip_adapter_ip_info_t ip;
+//     if(new_tcpip_adapter_get_ip_info(RPC_TCPIP_ADAPTER_IF_ETH, &ip)){
 //         return IPAddress();
 //     }
 //     return IPAddress(ip.ip.addr);
@@ -175,8 +175,8 @@
 
 // IPAddress ETHClass::subnetMask()
 // {
-//     tcpip_adapter_ip_info_t ip;
-//     if(tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_ETH, &ip)){
+//     rpc_tcpip_adapter_ip_info_t ip;
+//     if(new_tcpip_adapter_get_ip_info(RPC_TCPIP_ADAPTER_IF_ETH, &ip)){
 //         return IPAddress();
 //     }
 //     return IPAddress(ip.netmask.addr);
@@ -184,8 +184,8 @@
 
 // IPAddress ETHClass::gatewayIP()
 // {
-//     tcpip_adapter_ip_info_t ip;
-//     if(tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_ETH, &ip)){
+//     rpc_tcpip_adapter_ip_info_t ip;
+//     if(new_tcpip_adapter_get_ip_info(RPC_TCPIP_ADAPTER_IF_ETH, &ip)){
 //         return IPAddress();
 //     }
 //     return IPAddress(ip.gw.addr);
@@ -199,35 +199,35 @@
 
 // IPAddress ETHClass::broadcastIP()
 // {
-//     tcpip_adapter_ip_info_t ip;
-//     if(tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_ETH, &ip)){
+//     rpc_tcpip_adapter_ip_info_t ip;
+//     if(new_tcpip_adapter_get_ip_info(RPC_TCPIP_ADAPTER_IF_ETH, &ip)){
 //         return IPAddress();
 //     }
-//     return WiFiGenericClass::calculateBroadcast(IPAddress(ip.gw.addr), IPAddress(ip.netmask.addr));
+//     return rpcWiFiGenericClass::calculateBroadcast(IPAddress(ip.gw.addr), IPAddress(ip.netmask.addr));
 // }
 
 // IPAddress ETHClass::networkID()
 // {
-//     tcpip_adapter_ip_info_t ip;
-//     if(tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_ETH, &ip)){
+//     rpc_tcpip_adapter_ip_info_t ip;
+//     if(new_tcpip_adapter_get_ip_info(RPC_TCPIP_ADAPTER_IF_ETH, &ip)){
 //         return IPAddress();
 //     }
-//     return WiFiGenericClass::calculateNetworkID(IPAddress(ip.gw.addr), IPAddress(ip.netmask.addr));
+//     return rpcWiFiGenericClass::calculateNetworkID(IPAddress(ip.gw.addr), IPAddress(ip.netmask.addr));
 // }
 
 // uint8_t ETHClass::subnetCIDR()
 // {
-//     tcpip_adapter_ip_info_t ip;
-//     if(tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_ETH, &ip)){
+//     rpc_tcpip_adapter_ip_info_t ip;
+//     if(new_tcpip_adapter_get_ip_info(RPC_TCPIP_ADAPTER_IF_ETH, &ip)){
 //         return (uint8_t)0;
 //     }
-//     return WiFiGenericClass::calculateSubnetCIDR(IPAddress(ip.netmask.addr));
+//     return rpcWiFiGenericClass::calculateSubnetCIDR(IPAddress(ip.netmask.addr));
 // }
 
 // const char * ETHClass::getHostname()
 // {
 //     const char * hostname;
-//     if(tcpip_adapter_get_hostname(TCPIP_ADAPTER_IF_ETH, &hostname)){
+//     if(new_tcpip_adapter_get_hostname(RPC_TCPIP_ADAPTER_IF_ETH, &hostname)){
 //         return NULL;
 //     }
 //     return hostname;
@@ -235,7 +235,7 @@
 
 // bool ETHClass::setHostname(const char * hostname)
 // {
-//     return tcpip_adapter_set_hostname(TCPIP_ADAPTER_IF_ETH, hostname) == 0;
+//     return new_tcpip_adapter_set_hostname(RPC_TCPIP_ADAPTER_IF_ETH, hostname) == 0;
 // }
 
 // bool ETHClass::fullDuplex()
@@ -255,13 +255,13 @@
 
 // bool ETHClass::enableIpV6()
 // {
-//     return tcpip_adapter_create_ip6_linklocal(TCPIP_ADAPTER_IF_ETH) == 0;
+//     return new_tcpip_adapter_create_ip6_linklocal(RPC_TCPIP_ADAPTER_IF_ETH) == 0;
 // }
 
 // IPv6Address ETHClass::localIPv6()
 // {
 //     static ip6_addr_t addr;
-//     if(tcpip_adapter_get_ip6_linklocal(TCPIP_ADAPTER_IF_ETH, &addr)){
+//     if(new_tcpip_adapter_get_ip6_linklocal(RPC_TCPIP_ADAPTER_IF_ETH, &addr)){
 //         return IPv6Address();
 //     }
 //     return IPv6Address(addr.addr);

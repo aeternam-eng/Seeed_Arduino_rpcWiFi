@@ -10,10 +10,10 @@
   Created for arduino-esp32 on 04 July, 2018
   by Elochukwu Ifediora (fedy0)
 */
-
-#include <rpcWiFi.h>
-#include <rpcWiFiClient.h>
-#include <WiFiAP.h>
+#include "Arduino.h"
+#include "rpcWiFi.h"
+#include "rpcWiFiClient.h"
+#include "WiFiAP.h"
 
 #define LED_BUILTIN 2   // Set the GPIO pin where you connected your test LED or comment this line out if your dev board has a built-in LED
 
@@ -21,8 +21,7 @@
 const char *ssid = "yourAP";
 const char *password = "yourPassword";
 
-WiFiServer server(80);
-
+rpcWiFiServer server(80);
 
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
@@ -39,10 +38,12 @@ void setup() {
   server.begin();
 
   Serial.println("Server started");
+
+  delay(1000);
 }
 
 void loop() {
-  WiFiClient client = server.available();   // listen for incoming clients
+  rpcWiFiClient client = server.available();   // listen for incoming clients
 
   if (client) {                             // if you get a client,
     Serial.println("New Client.");           // print a message out the serial port

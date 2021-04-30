@@ -21,9 +21,9 @@
 
 #include <Arduino.h>
 #include "esp/esp_hal_log.h"
-#include "WiFiServer.h"
-#include "WiFiClient.h"
-#include "WebServer.h"
+#include "rpcWiFiServer.h"
+#include "rpcWiFiClient.h"
+#include "rpcWebServer.h"
 #include "detail/mimetable.h"
 
 #ifndef WEBSERVER_MAX_POST_ARGS
@@ -33,7 +33,7 @@
 static const char Content_Type[] PROGMEM = "Content-Type";
 static const char filename[] PROGMEM = "filename";
 
-static char* readBytesWithTimeout(WiFiClient& client, size_t maxLength, size_t& dataLength, int timeout_ms)
+static char* readBytesWithTimeout(rpcWiFiClient& client, size_t maxLength, size_t& dataLength, int timeout_ms)
 {
   char *buf = nullptr;
   dataLength = 0;
@@ -65,7 +65,7 @@ static char* readBytesWithTimeout(WiFiClient& client, size_t maxLength, size_t& 
   return buf;
 }
 
-bool WebServer::_parseRequest(WiFiClient& client) {
+bool rpcWebServer::_parseRequest(rpcWiFiClient& client) {
   // Read the first line of HTTP request
   String req = client.readStringUntil('\r');
   client.readStringUntil('\n');
@@ -238,7 +238,7 @@ bool WebServer::_parseRequest(WiFiClient& client) {
   return true;
 }
 
-bool WebServer::_collectHeader(const char* headerName, const char* headerValue) {
+bool rpcWebServer::_collectHeader(const char* headerName, const char* headerValue) {
   for (int i = 0; i < _headerKeysCount; i++) {
     if (_currentHeaders[i].key.equalsIgnoreCase(headerName)) {
             _currentHeaders[i].value=headerValue;
@@ -248,7 +248,7 @@ bool WebServer::_collectHeader(const char* headerName, const char* headerValue) 
   return false;
 }
 
-void WebServer::_parseArguments(String data) {
+void rpcWebServer::_parseArguments(String data) {
   log_v("args: %s", data.c_str());
   if (_currentArgs)
     delete[] _currentArgs;
@@ -297,7 +297,7 @@ void WebServer::_parseArguments(String data) {
 
 }
 
-void WebServer::_uploadWriteByte(uint8_t b){
+void rpcWebServer::_uploadWriteByte(uint8_t b){
   if (_currentUpload->currentSize == HTTP_UPLOAD_BUFLEN){
     if(_currentHandler && _currentHandler->canUpload(_currentUri))
       _currentHandler->upload(*this, _currentUri, *_currentUpload);
@@ -307,13 +307,13 @@ void WebServer::_uploadWriteByte(uint8_t b){
   _currentUpload->buf[_currentUpload->currentSize++] = b;
 }
 
-int WebServer::_uploadReadByte(WiFiClient& client){
+int rpcWebServer::_uploadReadByte(rpcWiFiClient& client){
   if (!client.connected()) return -1;
   int res = client.read();
   if(res < 0) {
     // keep trying until you either read a valid byte or timeout
     unsigned long startMillis = millis();
-    unsigned long timeoutIntervalMillis = client.getTimeout();
+    long timeoutIntervalMillis = client.getTimeout();
     boolean timedOut = false;
     for(;;) {
       // loosely modeled after blinkWithoutDelay pattern
@@ -348,7 +348,7 @@ int WebServer::_uploadReadByte(WiFiClient& client){
   return res;
 }
 
-bool WebServer::_parseForm(WiFiClient& client, String boundary, uint32_t len){
+bool rpcWebServer::_parseForm(rpcWiFiClient& client, String boundary, uint32_t len){
   (void) len;
   log_v("Parse Form: Boundary: %s Length: %d", boundary.c_str(), len);
   String line;
@@ -420,8 +420,8 @@ bool WebServer::_parseForm(WiFiClient& client, String boundary, uint32_t len){
               break;
             }
           } else {
-            _currentUpload.reset(new HTTPUpload());
-            _currentUpload->status = UPLOAD_FILE_START;
+            _currentUpload.reset(new rpcHTTPUpload());
+            _currentUpload->status = RPC_UPLOAD_FILE_START;
             _currentUpload->name = argName;
             _currentUpload->filename = argFilename;
             _currentUpload->type = argType;
@@ -430,7 +430,7 @@ bool WebServer::_parseForm(WiFiClient& client, String boundary, uint32_t len){
             log_v("Start File: %s Type: %s", _currentUpload->filename.c_str(), _currentUpload->type.c_str());
             if(_currentHandler && _currentHandler->canUpload(_currentUri))
               _currentHandler->upload(*this, _currentUri, *_currentUpload);
-            _currentUpload->status = UPLOAD_FILE_WRITE;
+            _currentUpload->status = RPC_UPLOAD_FILE_WRITE;
             int argByte = _uploadReadByte(client);
 readfile:
 
@@ -469,7 +469,7 @@ readfile:
                 if(_currentHandler && _currentHandler->canUpload(_currentUri))
                   _currentHandler->upload(*this, _currentUri, *_currentUpload);
                 _currentUpload->totalSize += _currentUpload->currentSize;
-                _currentUpload->status = UPLOAD_FILE_END;
+                _currentUpload->status = RPC_UPLOAD_FILE_END;
                 if(_currentHandler && _currentHandler->canUpload(_currentUri))
                   _currentHandler->upload(*this, _currentUri, *_currentUpload);
                 log_v("End File: %s Type: %s Size: %d", _currentUpload->filename.c_str(), _currentUpload->type.c_str(), _currentUpload->totalSize);
@@ -528,7 +528,7 @@ readfile:
   return false;
 }
 
-String WebServer::urlDecode(const String& text)
+String rpcWebServer::urlDecode(const String& text)
 {
 	String decoded = "";
 	char temp[] = "0x00";
@@ -559,8 +559,8 @@ String WebServer::urlDecode(const String& text)
 	return decoded;
 }
 
-bool WebServer::_parseFormUploadAborted(){
-  _currentUpload->status = UPLOAD_FILE_ABORTED;
+bool rpcWebServer::_parseFormUploadAborted(){
+  _currentUpload->status = RPC_UPLOAD_FILE_ABORTED;
   if(_currentHandler && _currentHandler->canUpload(_currentUri))
     _currentHandler->upload(*this, _currentUri, *_currentUpload);
   return false;
