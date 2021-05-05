@@ -58,7 +58,7 @@
 
 // bool ETHClass::begin(uint8_t phy_addr, int power, int mdc, int mdio, eth_phy_type_t type, eth_clock_mode_t clock_mode)
 // {
-//     esp_err_t err;
+//     rpc_esp_err_t err;
 //     if(initialized){
 //         err = esp_eth_enable();
 //         if(err){
@@ -111,7 +111,7 @@
 
 // bool ETHClass::config(IPAddress local_ip, IPAddress gateway, IPAddress subnet, IPAddress dns1, IPAddress dns2)
 // {
-//     esp_err_t err = ESP_OK;
+//     rpc_esp_err_t err = ESP_OK;
 //     rpc_tcpip_adapter_ip_info_t info;
 	
 //     if(local_ip != (uint32_t)0x00000000){
@@ -146,8 +146,8 @@
 //         staticIP = false;
 //     }
 
-//     ip_addr_t d;
-//     d.type = IPADDR_TYPE_V4;
+//     new_ip_addr_t d;
+//     d.type = NEW_IPADDR_TYPE_V4;
 
 //     if(dns1 != (uint32_t)0x00000000) {
 //         // Set DNS1-Server
@@ -193,7 +193,7 @@
 
 // IPAddress ETHClass::dnsIP(uint8_t dns_no)
 // {
-//     ip_addr_t dns_ip = dns_getserver(dns_no);
+//     new_ip_addr_t dns_ip = dns_getserver(dns_no);
 //     return IPAddress(dns_ip.u_addr.ip4.addr);
 // }
 

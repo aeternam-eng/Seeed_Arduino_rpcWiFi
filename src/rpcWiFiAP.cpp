@@ -216,9 +216,9 @@ bool rpcWiFiAPClass::softAPConfig(IPAddress local_ip, IPAddress gateway, IPAddre
 bool rpcWiFiAPClass::softAPdisconnect(bool wifioff)
 {
     bool ret;
-    wifi_config_t conf;
+    rpc_wifi_config_t conf;
 
-    if (rpcWiFiGenericClass::getMode() == WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() == RPC_WIFI_MODE_NULL)
     {
         return ESP_ERR_INVALID_STATE;
     }
@@ -243,8 +243,8 @@ bool rpcWiFiAPClass::softAPdisconnect(bool wifioff)
  */
 uint8_t rpcWiFiAPClass::softAPgetStationNum()
 {
-    wifi_sta_list_t clients;
-    if (rpcWiFiGenericClass::getMode() == WIFI_MODE_NULL)
+    rpc_wifi_sta_list_t clients;
+    if (rpcWiFiGenericClass::getMode() == RPC_WIFI_MODE_NULL)
     {
         return 0;
     }
@@ -271,7 +271,7 @@ uint8_t rpcWiFiAPClass::softAPgetStationNum()
 IPAddress rpcWiFiAPClass::softAPIP()
 {
     rpc_tcpip_adapter_ip_info_t ip;
-    if (rpcWiFiGenericClass::getMode() == WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() == RPC_WIFI_MODE_NULL)
     {
         return IPAddress();
     }
@@ -287,7 +287,7 @@ IPAddress rpcWiFiAPClass::softAPIP()
 IPAddress rpcWiFiAPClass::softAPBroadcastIP()
 {
     rpc_tcpip_adapter_ip_info_t ip;
-    if (rpcWiFiGenericClass::getMode() == WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() == RPC_WIFI_MODE_NULL)
     {
         return IPAddress();
     }
@@ -302,7 +302,7 @@ IPAddress rpcWiFiAPClass::softAPBroadcastIP()
 IPAddress rpcWiFiAPClass::softAPNetworkID()
 {
     rpc_tcpip_adapter_ip_info_t ip;
-    if (rpcWiFiGenericClass::getMode() == WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() == RPC_WIFI_MODE_NULL)
     {
         return IPAddress();
     }
@@ -317,7 +317,7 @@ IPAddress rpcWiFiAPClass::softAPNetworkID()
 uint8_t rpcWiFiAPClass::softAPSubnetCIDR()
 {
     rpc_tcpip_adapter_ip_info_t ip;
-    if (rpcWiFiGenericClass::getMode() == WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() == RPC_WIFI_MODE_NULL)
     {
         return (uint8_t)0;
     }
@@ -332,7 +332,7 @@ uint8_t rpcWiFiAPClass::softAPSubnetCIDR()
  */
 uint8_t *rpcWiFiAPClass::softAPmacAddress(uint8_t *mac)
 {
-    if (rpcWiFiGenericClass::getMode() != WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() != RPC_WIFI_MODE_NULL)
     {
         String macStr = softAPmacAddress();
         for (int i = 0; i < 6; i++)
@@ -350,7 +350,7 @@ uint8_t *rpcWiFiAPClass::softAPmacAddress(uint8_t *mac)
 String rpcWiFiAPClass::softAPmacAddress(void)
 {
     char macStr[18] = {0};
-    if (rpcWiFiGenericClass::getMode() == WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() == RPC_WIFI_MODE_NULL)
     {
         return String();
     }
@@ -366,7 +366,7 @@ String rpcWiFiAPClass::softAPmacAddress(void)
 const char *rpcWiFiAPClass::softAPgetHostname()
 {
     const char *hostname = NULL;
-    if (rpcWiFiGenericClass::getMode() == WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() == RPC_WIFI_MODE_NULL)
     {
         return hostname;
     }
@@ -383,7 +383,7 @@ const char *rpcWiFiAPClass::softAPgetHostname()
  */
 bool rpcWiFiAPClass::softAPsetHostname(const char *hostname)
 {
-    if (rpcWiFiGenericClass::getMode() == WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() == RPC_WIFI_MODE_NULL)
     {
         return false;
     }
@@ -396,7 +396,7 @@ bool rpcWiFiAPClass::softAPsetHostname(const char *hostname)
  */
 bool rpcWiFiAPClass::softAPenableIpV6()
 {
-    if (rpcWiFiGenericClass::getMode() == WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() == RPC_WIFI_MODE_NULL)
     {
         return false;
     }
@@ -410,7 +410,7 @@ bool rpcWiFiAPClass::softAPenableIpV6()
 IPv6Address rpcWiFiAPClass::softAPIPv6()
 {
     static ip6_addr_t addr;
-    if (rpcWiFiGenericClass::getMode() == WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() == RPC_WIFI_MODE_NULL)
     {
         return IPv6Address();
     }

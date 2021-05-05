@@ -32,9 +32,9 @@
 
 int htoi(const char *s);
 
-typedef void (*rpcWiFiEventCb)(system_event_id_t event);
-typedef std::function<void(system_event_id_t event, system_event_info_t info)> rpcWiFiEventFuncCb;
-typedef void (*rpcWiFiEventSysCb)(system_event_t *event);
+typedef void (*rpcWiFiEventCb)(rpc_system_event_id_t event);
+typedef std::function<void(rpc_system_event_id_t event, rpc_system_event_info_t info)> rpcWiFiEventFuncCb;
+typedef void (*rpcWiFiEventSysCb)(rpc_system_event_t *event);
 
 typedef size_t rpc_wifi_event_id_t;
 
@@ -74,11 +74,11 @@ class rpcWiFiGenericClass
   public:
     rpcWiFiGenericClass();
 
-    rpc_wifi_event_id_t onEvent(rpcWiFiEventCb cbEvent, system_event_id_t event = SYSTEM_EVENT_MAX);
-    rpc_wifi_event_id_t onEvent(rpcWiFiEventFuncCb cbEvent, system_event_id_t event = SYSTEM_EVENT_MAX);
-    rpc_wifi_event_id_t onEvent(rpcWiFiEventSysCb cbEvent, system_event_id_t event = SYSTEM_EVENT_MAX);
-    void removeEvent(rpcWiFiEventCb cbEvent, system_event_id_t event = SYSTEM_EVENT_MAX);
-    void removeEvent(rpcWiFiEventSysCb cbEvent, system_event_id_t event = SYSTEM_EVENT_MAX);
+    rpc_wifi_event_id_t onEvent(rpcWiFiEventCb cbEvent, rpc_system_event_id_t event = RPC_SYSTEM_EVENT_MAX);
+    rpc_wifi_event_id_t onEvent(rpcWiFiEventFuncCb cbEvent, rpc_system_event_id_t event = RPC_SYSTEM_EVENT_MAX);
+    rpc_wifi_event_id_t onEvent(rpcWiFiEventSysCb cbEvent, rpc_system_event_id_t event = RPC_SYSTEM_EVENT_MAX);
+    void removeEvent(rpcWiFiEventCb cbEvent, rpc_system_event_id_t event = RPC_SYSTEM_EVENT_MAX);
+    void removeEvent(rpcWiFiEventSysCb cbEvent, rpc_system_event_id_t event = RPC_SYSTEM_EVENT_MAX);
     void removeEvent(rpc_wifi_event_id_t id);
 
     static int getStatusBits();
@@ -88,8 +88,8 @@ class rpcWiFiGenericClass
 
     void persistent(bool persistent);
 
-    static bool mode(wifi_mode_t);
-    static wifi_mode_t getMode();
+    static bool mode(rpc_wifi_mode_t);
+    static rpc_wifi_mode_t getMode();
 
     bool enableSTA(bool enable);
     bool enableAP(bool enable);
@@ -100,13 +100,13 @@ class rpcWiFiGenericClass
     bool setTxPower(rpc_wifi_power_t power);
     rpc_wifi_power_t getTxPower();
 
-    static esp_err_t _eventCallback(void *arg, system_event_t *event);
+    static rpc_esp_err_t _eventCallback(void *arg, rpc_system_event_t *event);
 
   protected:
     static bool _persistent;
-    static wifi_mode_t _wifi_mode;
+    static rpc_wifi_mode_t _wifi_mode;
     static rpc_wifi_power_t _wifi_power;
-    static wifi_mode_t _forceSleepLastMode;
+    static rpc_wifi_mode_t _forceSleepLastMode;
 
     static int setStatusBits(int bits);
     static int clearStatusBits(int bits);

@@ -26,7 +26,7 @@
 #ifndef RPCWIFICLIENTMULTI_H_
 #define RPCWIFICLIENTMULTI_H_
 
-#include "WiFi.h"
+#include "rpcWiFi.h"
 #include <vector>
 
 typedef struct {

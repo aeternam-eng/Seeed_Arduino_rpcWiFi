@@ -52,27 +52,27 @@ bool rpcWiFiMulti::addAP(const char* ssid, const char *passphrase)
 
     if(!ssid || *ssid == 0x00 || strlen(ssid) > 31) {
         // fail SSID too long or missing!
-        log_e("[WIFI][APlistAdd] no ssid or ssid too long");
+        log_e("[rpcWiFi][APlistAdd] no ssid or ssid too long");
         return false;
     }
 
     if(passphrase && strlen(passphrase) > 63) {
         // fail passphrase too long!
-        log_e("[WIFI][APlistAdd] passphrase too long");
+        log_e("[rpcWiFi][APlistAdd] passphrase too long");
         return false;
     }
 
     newAP.ssid = strdup(ssid);
 
     if(!newAP.ssid) {
-        log_e("[WIFI][APlistAdd] fail newAP.ssid == 0");
+        log_e("[rpcWiFi][APlistAdd] fail newAP.ssid == 0");
         return false;
     }
 
     if(passphrase && *passphrase != 0x00) {
         newAP.passphrase = strdup(passphrase);
         if(!newAP.passphrase) {
-            log_e("[WIFI][APlistAdd] fail newAP.passphrase == 0");
+            log_e("[rpcWiFi][APlistAdd] fail newAP.passphrase == 0");
             free(newAP.ssid);
             return false;
         }
@@ -81,26 +81,26 @@ bool rpcWiFiMulti::addAP(const char* ssid, const char *passphrase)
     }
 
     APlist.push_back(newAP);
-    log_i("[WIFI][APlistAdd] add SSID: %s", newAP.ssid);
+    log_i("[rpcWiFi][APlistAdd] add SSID: %s", newAP.ssid);
     return true;
 }
 
 uint8_t rpcWiFiMulti::run(uint32_t connectTimeout)
 {
     int8_t scanResult;
-    uint8_t status = WiFi.status();
+    uint8_t status = rpcWiFi.status();
     if(status == WL_CONNECTED) {
         for(uint32_t x = 0; x < APlist.size(); x++) {
-            if(WiFi.SSID()==APlist[x].ssid) {
+            if(rpcWiFi.SSID()==APlist[x].ssid) {
                 return status;
             }
         }
-        WiFi.disconnect(false,false);
+        rpcWiFi.disconnect(false,false);
         delay(10);
-        status = WiFi.status();
+        status = rpcWiFi.status();
     }
 
-    scanResult = WiFi.scanNetworks();
+    scanResult = rpcWiFi.scanNetworks();
     if(scanResult == WIFI_SCAN_RUNNING) {
         // scan is running
         return WL_NO_SSID_AVAIL;
@@ -111,12 +111,12 @@ uint8_t rpcWiFiMulti::run(uint32_t connectTimeout)
         uint8_t bestBSSID[6];
         int32_t bestChannel = 0;
 
-        log_i("[WIFI] scan done");
+        log_i("[rpcWiFi] scan done");
 
         if(scanResult == 0) {
-            log_e("[WIFI] no networks found");
+            log_e("[rpcWiFi] no networks found");
         } else {
-            log_i("[WIFI] %d networks found", scanResult);
+            log_i("[rpcWiFi] %d networks found", scanResult);
             for(int8_t i = 0; i < scanResult; ++i) {
 
                 String ssid_scan;
@@ -125,7 +125,7 @@ uint8_t rpcWiFiMulti::run(uint32_t connectTimeout)
                 uint8_t* BSSID_scan;
                 int32_t chan_scan;
 
-                WiFi.getNetworkInfo(i, ssid_scan, sec_scan, rssi_scan, BSSID_scan, chan_scan);
+                rpcWiFi.getNetworkInfo(i, ssid_scan, sec_scan, rssi_scan, BSSID_scan, chan_scan);
 
                 bool known = false;
                 for(uint32_t x = 0; x < APlist.size(); x++) {
@@ -134,7 +134,7 @@ uint8_t rpcWiFiMulti::run(uint32_t connectTimeout)
                     if(ssid_scan == entry.ssid) { // SSID match
                         known = true;
                         if(rssi_scan > bestNetworkDb) { // best network
-                            if(sec_scan == WIFI_AUTH_OPEN || entry.passphrase) { // check for passphrase if not open wlan
+                            if(sec_scan == RPC_WIFI_AUTH_OPEN || entry.passphrase) { // check for passphrase if not open wlan
                                 bestNetworkDb = rssi_scan;
                                 bestChannel = chan_scan;
                                 memcpy((void*) &bestNetwork, (void*) &entry, sizeof(bestNetwork));
@@ -146,58 +146,58 @@ uint8_t rpcWiFiMulti::run(uint32_t connectTimeout)
                 }
 
                 if(known) {
-                    log_d(" --->   %d: [%d][%02X:%02X:%02X:%02X:%02X:%02X] %s (%d) %c", i, chan_scan, BSSID_scan[0], BSSID_scan[1], BSSID_scan[2], BSSID_scan[3], BSSID_scan[4], BSSID_scan[5], ssid_scan.c_str(), rssi_scan, (sec_scan == WIFI_AUTH_OPEN) ? ' ' : '*');
+                    log_d(" --->   %d: [%d][%02X:%02X:%02X:%02X:%02X:%02X] %s (%d) %c", i, chan_scan, BSSID_scan[0], BSSID_scan[1], BSSID_scan[2], BSSID_scan[3], BSSID_scan[4], BSSID_scan[5], ssid_scan.c_str(), rssi_scan, (sec_scan == RPC_WIFI_AUTH_OPEN) ? ' ' : '*');
                 } else {
-                    log_d("       %d: [%d][%02X:%02X:%02X:%02X:%02X:%02X] %s (%d) %c", i, chan_scan, BSSID_scan[0], BSSID_scan[1], BSSID_scan[2], BSSID_scan[3], BSSID_scan[4], BSSID_scan[5], ssid_scan.c_str(), rssi_scan, (sec_scan == WIFI_AUTH_OPEN) ? ' ' : '*');
+                    log_d("       %d: [%d][%02X:%02X:%02X:%02X:%02X:%02X] %s (%d) %c", i, chan_scan, BSSID_scan[0], BSSID_scan[1], BSSID_scan[2], BSSID_scan[3], BSSID_scan[4], BSSID_scan[5], ssid_scan.c_str(), rssi_scan, (sec_scan == RPC_WIFI_AUTH_OPEN) ? ' ' : '*');
                 }
             }
         }
 
         // clean up ram
-        WiFi.scanDelete();
+        rpcWiFi.scanDelete();
 
         if(bestNetwork.ssid) {
-            log_i("[WIFI] Connecting BSSID: %02X:%02X:%02X:%02X:%02X:%02X SSID: %s Channal: %d (%d)", bestBSSID[0], bestBSSID[1], bestBSSID[2], bestBSSID[3], bestBSSID[4], bestBSSID[5], bestNetwork.ssid, bestChannel, bestNetworkDb);
+            log_i("[rpcWiFi] Connecting BSSID: %02X:%02X:%02X:%02X:%02X:%02X SSID: %s Channal: %d (%d)", bestBSSID[0], bestBSSID[1], bestBSSID[2], bestBSSID[3], bestBSSID[4], bestBSSID[5], bestNetwork.ssid, bestChannel, bestNetworkDb);
 
-            WiFi.begin(bestNetwork.ssid, bestNetwork.passphrase, bestChannel, bestBSSID);
-            status = WiFi.status();
+            rpcWiFi.begin(bestNetwork.ssid, bestNetwork.passphrase, bestChannel, bestBSSID);
+            status = rpcWiFi.status();
 
             auto startTime = millis();
             // wait for connection, fail, or timeout
             while(status != WL_CONNECTED && status != WL_NO_SSID_AVAIL && status != WL_CONNECT_FAILED && (millis() - startTime) <= connectTimeout) {
                 delay(10);
-                status = WiFi.status();
+                status = rpcWiFi.status();
             }
 
             switch(status) {
             case WL_CONNECTED:
-                log_i("[WIFI] Connecting done.");
-                log_d("[WIFI] SSID: %s", WiFi.SSID().c_str());
-                log_d("[WIFI] IP: %s", WiFi.localIP().toString().c_str());
-                log_d("[WIFI] MAC: %s", WiFi.BSSIDstr().c_str());
-                log_d("[WIFI] Channel: %d", WiFi.channel());
+                log_i("[rpcWiFi] Connecting done.");
+                log_d("[rpcWiFi] SSID: %s", rpcWiFi.SSID().c_str());
+                log_d("[rpcWiFi] IP: %s", rpcWiFi.localIP().toString().c_str());
+                log_d("[rpcWiFi] MAC: %s", rpcWiFi.BSSIDstr().c_str());
+                log_d("[rpcWiFi] Channel: %d", rpcWiFi.channel());
                 break;
             case WL_NO_SSID_AVAIL:
-                log_e("[WIFI] Connecting Failed AP not found.");
+                log_e("[rpcWiFi] Connecting Failed AP not found.");
                 break;
             case WL_CONNECT_FAILED:
-                log_e("[WIFI] Connecting Failed.");
+                log_e("[rpcWiFi] Connecting Failed.");
                 break;
             default:
-                log_e("[WIFI] Connecting Failed (%d).", status);
+                log_e("[rpcWiFi] Connecting Failed (%d).", status);
                 break;
             }
         } else {
-            log_e("[WIFI] no matching wifi found!");
+            log_e("[rpcWiFi] no matching rpcWiFi found!");
         }
     } else {
         // start scan
-        log_d("[WIFI] delete old wifi config...");
-        WiFi.disconnect();
+        log_d("[rpcWiFi] delete old rpcWiFi config...");
+        rpcWiFi.disconnect();
 
-        log_d("[WIFI] start scan");
-        // scan wifi async mode
-        WiFi.scanNetworks(true);
+        log_d("[rpcWiFi] start scan");
+        // scan rpcWiFi async mode
+        rpcWiFi.scanNetworks(true);
     }
 
     return status;

@@ -122,7 +122,7 @@ static void ping_prepare_echo(struct icmp_echo_hdr *iecho, uint16_t len) {
     iecho->chksum = inet_chksum(iecho, len);
 }
 
-static err_t ping_send(int s, ip4_addr_t *addr, int size) {
+static err_t ping_send(int s, new_ip4_addr_t *addr, int size) {
     struct icmp_echo_hdr *iecho;
     struct sockaddr_in to;
     size_t ping_size = sizeof(struct icmp_echo_hdr) + size;
@@ -170,7 +170,7 @@ static void ping_recv(int s) {
             gettimeofday(&end, NULL);
 
             /// Get from IP address
-            ip4_addr_t fromaddr;
+            new_ip4_addr_t fromaddr;
             inet_addr_to_ip4addr(&fromaddr, &from.sin_addr);
 
             strcpy(ipa, inet_ntoa(fromaddr));
@@ -257,7 +257,7 @@ bool ping_start(struct ping_option *ping_o) {
 bool ping_start(IPAddress adr, int count=0, int interval=0, int size=0, int timeout=0, struct ping_option *ping_o) {
 //	driver_error_t *error;
     struct sockaddr_in address;
-    ip4_addr_t ping_target;
+    new_ip4_addr_t ping_target;
     int s;
     // Get default values if argument are not provided
     if (count == 0) {

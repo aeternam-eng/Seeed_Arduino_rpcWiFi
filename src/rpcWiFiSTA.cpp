@@ -254,7 +254,7 @@ wl_status_t rpcWiFiSTAClass::begin()
  */
 bool rpcWiFiSTAClass::reconnect()
 {
-    if (rpcWiFi.getMode() & WIFI_MODE_STA)
+    if (rpcWiFi.getMode() & RPC_WIFI_MODE_STA)
     {
         if (wifi_disconnect() == RTW_SUCCESS)
         {
@@ -272,11 +272,11 @@ bool rpcWiFiSTAClass::reconnect()
 bool rpcWiFiSTAClass::disconnect(bool wifioff, bool eraseap)
 {
 
-    if (rpcWiFi.getMode() & WIFI_MODE_STA)
+    if (rpcWiFi.getMode() & RPC_WIFI_MODE_STA)
     {
         if (eraseap)
         {
-            // memset(&conf, 0, sizeof(wifi_config_t));
+            // memset(&conf, 0, sizeof(rpc_wifi_config_t));
             // if(esp_wifi_set_config(WIFI_IF_STA, &conf)){
             //     log_e("clear config failed!");
             // }
@@ -306,7 +306,7 @@ bool rpcWiFiSTAClass::disconnect(bool wifioff, bool eraseap)
  */
 bool rpcWiFiSTAClass::config(IPAddress local_ip, IPAddress gateway, IPAddress subnet, IPAddress dns1, IPAddress dns2)
 {
-    esp_err_t err = ESP_OK;
+    rpc_esp_err_t err = ESP_OK;
 
     if (!rpcWiFi.enableSTA(true))
     {
@@ -454,7 +454,7 @@ bool rpcWiFiSTAClass::getAutoReconnect()
 uint8_t rpcWiFiSTAClass::waitForConnectResult()
 {
     //1 and 3 have STA enabled
-    if ((rpcWiFiGenericClass::getMode() & WIFI_MODE_STA) == 0)
+    if ((rpcWiFiGenericClass::getMode() & RPC_WIFI_MODE_STA) == 0)
     {
         return WL_DISCONNECTED;
     }
@@ -472,7 +472,7 @@ uint8_t rpcWiFiSTAClass::waitForConnectResult()
  */
 IPAddress rpcWiFiSTAClass::localIP()
 {
-    if (rpcWiFiGenericClass::getMode() == WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() == RPC_WIFI_MODE_NULL)
     {
         return IPAddress();
     }
@@ -488,7 +488,7 @@ IPAddress rpcWiFiSTAClass::localIP()
  */
 uint8_t *rpcWiFiSTAClass::macAddress(uint8_t *mac)
 {
-    if (rpcWiFiGenericClass::getMode() != WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() != RPC_WIFI_MODE_NULL)
     {
         String macStr = macAddress();
         for (int i = 0; i < 6; i++)
@@ -506,7 +506,7 @@ uint8_t *rpcWiFiSTAClass::macAddress(uint8_t *mac)
 String rpcWiFiSTAClass::macAddress(void)
 {
     char macStr[18] = {0};
-    if (rpcWiFiGenericClass::getMode() == WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() == RPC_WIFI_MODE_NULL)
     {
         return String();
     }
@@ -521,7 +521,7 @@ String rpcWiFiSTAClass::macAddress(void)
  */
 IPAddress rpcWiFiSTAClass::subnetMask()
 {
-    if (rpcWiFiGenericClass::getMode() == WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() == RPC_WIFI_MODE_NULL)
     {
         return IPAddress();
     }
@@ -536,7 +536,7 @@ IPAddress rpcWiFiSTAClass::subnetMask()
  */
 IPAddress rpcWiFiSTAClass::gatewayIP()
 {
-    if (rpcWiFiGenericClass::getMode() == WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() == RPC_WIFI_MODE_NULL)
     {
         return IPAddress();
     }
@@ -552,7 +552,7 @@ IPAddress rpcWiFiSTAClass::gatewayIP()
  */
 IPAddress rpcWiFiSTAClass::dnsIP(uint8_t dns_no)
 {
-    if (rpcWiFiGenericClass::getMode() == WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() == RPC_WIFI_MODE_NULL)
     {
         return IPAddress();
     }
@@ -574,7 +574,7 @@ IPAddress rpcWiFiSTAClass::dnsIP(uint8_t dns_no)
  */
 IPAddress rpcWiFiSTAClass::broadcastIP()
 {
-    if (rpcWiFiGenericClass::getMode() == WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() == RPC_WIFI_MODE_NULL)
     {
         return IPAddress();
     }
@@ -589,7 +589,7 @@ IPAddress rpcWiFiSTAClass::broadcastIP()
  */
 IPAddress rpcWiFiSTAClass::networkID()
 {
-    if (rpcWiFiGenericClass::getMode() == WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() == RPC_WIFI_MODE_NULL)
     {
         return IPAddress();
     }
@@ -604,7 +604,7 @@ IPAddress rpcWiFiSTAClass::networkID()
  */
 uint8_t rpcWiFiSTAClass::subnetCIDR()
 {
-    if (rpcWiFiGenericClass::getMode() == WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() == RPC_WIFI_MODE_NULL)
     {
         return (uint8_t)0;
     }
@@ -619,13 +619,13 @@ uint8_t rpcWiFiSTAClass::subnetCIDR()
  */
 String rpcWiFiSTAClass::SSID() const
 {  
-    if(rpcWiFiGenericClass::getMode() == WIFI_MODE_APSTA)
+    if(rpcWiFiGenericClass::getMode() == RPC_WIFI_MODE_APSTA)
     {
         rtw_wifi_setting_t wifi_setting;
         wifi_get_setting(WLAN1_NAME,&wifi_setting);
         return String(reinterpret_cast<char *>(wifi_setting.ssid));
     }
-    else if(rpcWiFiGenericClass::getMode() == WIFI_MODE_STA)
+    else if(rpcWiFiGenericClass::getMode() == RPC_WIFI_MODE_STA)
     {
         rtw_wifi_setting_t wifi_setting;
         wifi_get_setting(WLAN0_NAME,&wifi_setting);
@@ -641,11 +641,11 @@ String rpcWiFiSTAClass::SSID() const
  */
 String rpcWiFiSTAClass::psk() const
 {
-    if (rpcWiFiGenericClass::getMode() == WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() == RPC_WIFI_MODE_NULL)
     {
         return String();
     }
-    wifi_config_t conf;
+    rpc_wifi_config_t conf;
     esp_wifi_get_config(WIFI_IF_STA, &conf);
     return String(reinterpret_cast<char *>(conf.sta.password));
 }
@@ -657,7 +657,7 @@ String rpcWiFiSTAClass::psk() const
 uint8_t *rpcWiFiSTAClass::BSSID(void)
 {
     static uint8_t bssid[6];
-    if (rpcWiFiGenericClass::getMode() == WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() == RPC_WIFI_MODE_NULL)
     {
         return NULL;
     }
@@ -690,7 +690,7 @@ String rpcWiFiSTAClass::BSSIDstr(void)
  */
 int8_t rpcWiFiSTAClass::RSSI(void)
 {
-    if (rpcWiFiGenericClass::getMode() == WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() == RPC_WIFI_MODE_NULL)
     {
         return 0;
     }
@@ -709,7 +709,7 @@ int8_t rpcWiFiSTAClass::RSSI(void)
 const char *rpcWiFiSTAClass::getHostname()
 {
     const char *hostname = NULL;
-    if (rpcWiFiGenericClass::getMode() == WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() == RPC_WIFI_MODE_NULL)
     {
         return hostname;
     }
@@ -727,7 +727,7 @@ const char *rpcWiFiSTAClass::getHostname()
  */
 bool rpcWiFiSTAClass::setHostname(const char *hostname)
 {
-    if (rpcWiFiGenericClass::getMode() == WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() == RPC_WIFI_MODE_NULL)
     {
         return false;
     }
@@ -740,7 +740,7 @@ bool rpcWiFiSTAClass::setHostname(const char *hostname)
  */
 bool rpcWiFiSTAClass::enableIpV6()
 {
-    if (rpcWiFiGenericClass::getMode() == WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() == RPC_WIFI_MODE_NULL)
     {
         return false;
     }
@@ -754,7 +754,7 @@ bool rpcWiFiSTAClass::enableIpV6()
 IPv6Address rpcWiFiSTAClass::localIPv6()
 {
     static ip6_addr_t addr;
-    if (rpcWiFiGenericClass::getMode() == WIFI_MODE_NULL)
+    if (rpcWiFiGenericClass::getMode() == RPC_WIFI_MODE_NULL)
     {
         return IPv6Address();
     }
@@ -835,16 +835,16 @@ IPv6Address rpcWiFiSTAClass::localIPv6()
 //         log_d("Type: %s", sc_type_strings[*type % 3]);
 // #endif
 //     } else if (status == SC_STATUS_LINK) {
-//         wifi_sta_config_t *sta_conf = reinterpret_cast<wifi_sta_config_t *>(result);
+//         rpc_wifi_sta_config_t *sta_conf = reinterpret_cast<rpc_wifi_sta_config_t *>(result);
 //         log_d("SSID: %s", (char *)(sta_conf->ssid));
 //         sta_conf->bssid_set = 0;
-//         esp_wifi_set_config(WIFI_IF_STA, (wifi_config_t *)sta_conf);
+//         esp_wifi_set_config(WIFI_IF_STA, (rpc_wifi_config_t *)sta_conf);
 //         esp_wifi_connect();
 //         _smartConfigDone = true;
 //     } else if (status == SC_STATUS_LINK_OVER) {
 //         if(result){
 // #if ARDUHAL_LOG_LEVEL >= ARDUHAL_LOG_LEVEL_DEBUG
-//             ip4_addr_t * ip = (ip4_addr_t *)result;
+//             new_ip4_addr_t * ip = (new_ip4_addr_t *)result;
 //             log_d("Sender IP: " IPSTR, IP2STR(ip));
 // #endif
 //         }

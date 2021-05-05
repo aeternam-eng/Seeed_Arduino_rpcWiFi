@@ -40,7 +40,7 @@ public:
     bool getNetworkInfo(uint8_t networkItem, String &ssid, uint8_t &encryptionType, int32_t &RSSI, uint8_t* &BSSID, int32_t &channel);
 
     String SSID(uint8_t networkItem);
-    wifi_auth_mode_t encryptionType(uint8_t networkItem);
+    rpc_wifi_auth_mode_t encryptionType(uint8_t networkItem);
     int32_t RSSI(uint8_t networkItem);
     uint8_t * BSSID(uint8_t networkItem);
     String BSSIDstr(uint8_t networkItem);

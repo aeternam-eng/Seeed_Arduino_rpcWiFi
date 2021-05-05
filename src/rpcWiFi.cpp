@@ -46,11 +46,11 @@ void rpcWiFiClass::printDiag(Print& p)
 {
     // const char* modes[] = { "NULL", "STA", "AP", "STA+AP" };
 
-    // wifi_mode_t mode;
+    // rpc_wifi_mode_t mode;
     // esp_wifi_get_mode(&mode);
 
     // uint8_t primaryChan;
-    // wifi_second_chan_t secondChan;
+    // rpc_wifi_second_chan_t secondChan;
     // esp_wifi_get_channel(&primaryChan, &secondChan);
 
     // p.print("Mode: ");
@@ -66,7 +66,7 @@ void rpcWiFiClass::printDiag(Print& p)
     //     p.println(wifi_station_get_connect_status());
     // */
 
-    // wifi_config_t conf;
+    // rpc_wifi_config_t conf;
     // esp_wifi_get_config(WIFI_IF_STA, &conf);
 
     // const char* ssid = reinterpret_cast<const char*>(conf.sta.ssid);
