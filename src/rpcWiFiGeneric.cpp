@@ -399,8 +399,13 @@ rpc_esp_err_t rpcWiFiGenericClass::_eventCallback(void *arg, rpc_system_event_t 
     }
     else if (event->event_id == RPC_SYSTEM_EVENT_STA_CONNECTED)
     {
-        rpcWiFiSTAClass::_setStatus(WL_IDLE_STATUS);
-        setStatusBits(RPC_STA_CONNECTED_BIT);
+        if(rpcWiFiSTAClass::_useStaticIp){
+            rpcWiFiSTAClass::_setStatus(WL_CONNECTED);
+            setStatusBits(RPC_STA_HAS_IP_BIT | RPC_STA_CONNECTED_BIT);
+        } else {
+            rpcWiFiSTAClass::_setStatus(WL_IDLE_STATUS);
+            setStatusBits(RPC_STA_CONNECTED_BIT);
+        }
     }
     else if (event->event_id == RPC_SYSTEM_EVENT_STA_DISCONNECTED)
     {

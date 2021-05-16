@@ -86,8 +86,9 @@ public:
     int8_t RSSI();
 
     static void _setStatus(wl_status_t status);
-protected:
+    
     static bool _useStaticIp;
+protected:
     static bool _autoReconnect;
 
 public: 
