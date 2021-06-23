@@ -389,21 +389,21 @@ rpc_esp_err_t rpcWiFiGenericClass::_eventCallback(void *arg, rpc_system_event_t 
     }
     else if (event->event_id == RPC_SYSTEM_EVENT_STA_START)
     {
-        rpcWiFiSTAClass::_setStatus(WL_DISCONNECTED);
+        rpcWiFiSTAClass::_setStatus(RPC_WL_DISCONNECTED);
         setStatusBits(RPC_STA_STARTED_BIT);
     }
     else if (event->event_id == RPC_SYSTEM_EVENT_STA_STOP)
     {
-        rpcWiFiSTAClass::_setStatus(WL_NO_SHIELD);
+        rpcWiFiSTAClass::_setStatus(RPC_WL_NO_SHIELD);
         clearStatusBits(RPC_STA_STARTED_BIT | RPC_STA_CONNECTED_BIT | RPC_STA_HAS_IP_BIT | RPC_STA_HAS_IP6_BIT);
     }
     else if (event->event_id == RPC_SYSTEM_EVENT_STA_CONNECTED)
     {
         if(rpcWiFiSTAClass::_useStaticIp){
-            rpcWiFiSTAClass::_setStatus(WL_CONNECTED);
+            rpcWiFiSTAClass::_setStatus(RPC_WL_CONNECTED);
             setStatusBits(RPC_STA_HAS_IP_BIT | RPC_STA_CONNECTED_BIT);
         } else {
-            rpcWiFiSTAClass::_setStatus(WL_IDLE_STATUS);
+            rpcWiFiSTAClass::_setStatus(RPC_WL_IDLE_STATUS);
             setStatusBits(RPC_STA_CONNECTED_BIT);
         }
     }
@@ -413,22 +413,22 @@ rpc_esp_err_t rpcWiFiGenericClass::_eventCallback(void *arg, rpc_system_event_t 
         log_w("Reason: %u - %s", reason, reason2str(reason));
         if (reason == RPC_WIFI_REASON_NO_AP_FOUND)
         {
-            rpcWiFiSTAClass::_setStatus(WL_NO_SSID_AVAIL);
+            rpcWiFiSTAClass::_setStatus(RPC_WL_NO_SSID_AVAIL);
         }
         else if (reason == RPC_WIFI_REASON_AUTH_FAIL || reason == RPC_WIFI_REASON_ASSOC_FAIL)
         {
-            rpcWiFiSTAClass::_setStatus(WL_CONNECT_FAILED);
+            rpcWiFiSTAClass::_setStatus(RPC_WL_CONNECT_FAILED);
         }
         else if (reason == RPC_WIFI_REASON_BEACON_TIMEOUT || reason == RPC_WIFI_REASON_HANDSHAKE_TIMEOUT)
         {
-            rpcWiFiSTAClass::_setStatus(WL_CONNECTION_LOST);
+            rpcWiFiSTAClass::_setStatus(RPC_WL_CONNECTION_LOST);
         }
         else if (reason == RPC_WIFI_REASON_AUTH_EXPIRE)
         {
         }
         else
         {
-            rpcWiFiSTAClass::_setStatus(WL_DISCONNECTED);
+            rpcWiFiSTAClass::_setStatus(RPC_WL_DISCONNECTED);
         }
         clearStatusBits(RPC_STA_CONNECTED_BIT | RPC_STA_HAS_IP_BIT | RPC_STA_HAS_IP6_BIT);
         if (((reason == RPC_WIFI_REASON_AUTH_EXPIRE) ||
@@ -450,12 +450,12 @@ rpc_esp_err_t rpcWiFiGenericClass::_eventCallback(void *arg, rpc_system_event_t 
               mask[0], mask[1], mask[2], mask[3],
               gw[0], gw[1], gw[2], gw[3]);
 #endif
-        rpcWiFiSTAClass::_setStatus(WL_CONNECTED);
+        rpcWiFiSTAClass::_setStatus(RPC_WL_CONNECTED);
         setStatusBits(RPC_STA_HAS_IP_BIT | RPC_STA_CONNECTED_BIT);
     }
     else if (event->event_id == RPC_SYSTEM_EVENT_STA_LOST_IP)
     {
-        rpcWiFiSTAClass::_setStatus(WL_IDLE_STATUS);
+        rpcWiFiSTAClass::_setStatus(RPC_WL_IDLE_STATUS);
         clearStatusBits(RPC_STA_HAS_IP_BIT);
     }
     else if (event->event_id == RPC_SYSTEM_EVENT_AP_START)
@@ -575,7 +575,7 @@ void rpcWiFiGenericClass::persistent(bool persistent)
 
 /**
  * set new mode
- * @param m WiFiMode_t
+ * @param m rpcWiFiMode_t
  */
 bool rpcWiFiGenericClass::mode(rpc_wifi_mode_t m)
 {

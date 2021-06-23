@@ -28,7 +28,7 @@
 #include "IPAddress.h"
 #include "IPv6Address.h"
 
-#include "WiFiType.h"
+#include "rpcWiFiType.h"
 #include "rpcWiFiSTA.h"
 #include "rpcWiFiAP.h"
 #include "rpcWiFiScan.h"

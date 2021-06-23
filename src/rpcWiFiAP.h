@@ -24,7 +24,7 @@
 #define RPCESP32WIFIAP_H_
 
 
-#include "WiFiType.h"
+#include "rpcWiFiType.h"
 #include "rpcWiFiGeneric.h"
 
 

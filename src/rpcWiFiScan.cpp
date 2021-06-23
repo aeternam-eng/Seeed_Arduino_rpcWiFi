@@ -52,7 +52,7 @@ int16_t rpcWiFiScanClass::scanNetworks(bool async, bool show_hidden, bool passiv
 {
     if (rpcWiFiGenericClass::getStatusBits() & RPC_WIFI_SCANNING_BIT)
     {
-        return WIFI_SCAN_RUNNING;
+        return RPC_WIFI_SCAN_RUNNING;
     }
 
     rpcWiFiScanClass::_scanTimeout = max_ms_per_chan * 20;
@@ -88,14 +88,14 @@ int16_t rpcWiFiScanClass::scanNetworks(bool async, bool show_hidden, bool passiv
 
         if (rpcWiFiScanClass::_scanAsync)
         {
-            return WIFI_SCAN_RUNNING;
+            return RPC_WIFI_SCAN_RUNNING;
         }
         if (rpcWiFiGenericClass::waitStatusBits(RPC_WIFI_SCAN_DONE_BIT, 10000))
         {
             return (int16_t)rpcWiFiScanClass::_scanCount;
         }
     }
-    return WIFI_SCAN_FAILED;
+    return RPC_WIFI_SCAN_FAILED;
 }
 
 /**
@@ -143,9 +143,9 @@ void *rpcWiFiScanClass::_getScanInfoByIndex(int i)
 int16_t rpcWiFiScanClass::scanComplete()
 {
     if (rpcWiFiScanClass::_scanStarted && (millis() - rpcWiFiScanClass::_scanStarted) > rpcWiFiScanClass::_scanTimeout)
-    { //Check is scan was started and if the delay expired, return WIFI_SCAN_FAILED in this case
+    { //Check is scan was started and if the delay expired, return RPC_WIFI_SCAN_FAILED in this case
         rpcWiFiGenericClass::clearStatusBits(RPC_WIFI_SCANNING_BIT);
-        return WIFI_SCAN_FAILED;
+        return RPC_WIFI_SCAN_FAILED;
     }
 
     if (rpcWiFiGenericClass::getStatusBits() & RPC_WIFI_SCAN_DONE_BIT)
@@ -155,10 +155,10 @@ int16_t rpcWiFiScanClass::scanComplete()
 
     if (rpcWiFiGenericClass::getStatusBits() & RPC_WIFI_SCANNING_BIT)
     {
-        return WIFI_SCAN_RUNNING;
+        return RPC_WIFI_SCAN_RUNNING;
     }
 
-    return WIFI_SCAN_FAILED;
+    return RPC_WIFI_SCAN_FAILED;
 }
 
 /**

@@ -28,7 +28,7 @@
 #undef max
 #undef min
 #include <functional>
-#include "WiFiType.h"
+#include "rpcWiFiType.h"
 
 int htoi(const char *s);
 

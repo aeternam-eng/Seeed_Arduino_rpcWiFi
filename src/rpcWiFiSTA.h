@@ -24,7 +24,7 @@
 #define RPCESP32WIFISTA_H_
 
 
-#include "WiFiType.h"
+#include "rpcWiFiType.h"
 #include "rpcWiFiGeneric.h"
 
 
@@ -36,8 +36,8 @@ class rpcWiFiSTAClass
 
 public:
 
-    wl_status_t begin(const char* ssid, const char *passphrase = NULL, int32_t channel = 0, const uint8_t* bssid = NULL, bool connect = true);
-    wl_status_t begin();
+    rpc_wl_status_t begin(const char* ssid, const char *passphrase = NULL, int32_t channel = 0, const uint8_t* bssid = NULL, bool connect = true);
+    rpc_wl_status_t begin();
 
     bool config(IPAddress local_ip, IPAddress gateway, IPAddress subnet, IPAddress dns1 = (uint32_t)0x00000000, IPAddress dns2 = (uint32_t)0x00000000);
 
@@ -76,7 +76,7 @@ public:
     bool setHostname(const char * hostname);
 
     // STA WiFi info
-    static wl_status_t status();
+    static rpc_wl_status_t status();
     String SSID() const;
     String psk() const;
 
@@ -85,7 +85,7 @@ public:
 
     int8_t RSSI();
 
-    static void _setStatus(wl_status_t status);
+    static void _setStatus(rpc_wl_status_t status);
     
     static bool _useStaticIp;
 protected:

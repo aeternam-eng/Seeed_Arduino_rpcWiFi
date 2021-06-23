@@ -211,7 +211,7 @@ bool rpcWiFiAPClass::softAPConfig(IPAddress local_ip, IPAddress gateway, IPAddre
 /**
  * Disconnect from the network (close AP)
  * @param wifioff disable mode?
- * @return one value of wl_status_t enum
+ * @return one value of rpc_wl_status_t enum
  */
 bool rpcWiFiAPClass::softAPdisconnect(bool wifioff)
 {

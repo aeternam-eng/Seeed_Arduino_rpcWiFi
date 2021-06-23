@@ -23,7 +23,7 @@
 #ifndef RPCESP32WIFISCAN_H_
 #define RPCESP32WIFISCAN_H_
 
-#include "WiFiType.h"
+#include "rpcWiFiType.h"
 #include "rpcWiFiGeneric.h"
 
 class rpcWiFiScanClass

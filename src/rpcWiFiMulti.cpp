@@ -89,7 +89,7 @@ uint8_t rpcWiFiMulti::run(uint32_t connectTimeout)
 {
     int8_t scanResult;
     uint8_t status = rpcWiFi.status();
-    if(status == WL_CONNECTED) {
+    if(status == RPC_WL_CONNECTED) {
         for(uint32_t x = 0; x < APlist.size(); x++) {
             if(rpcWiFi.SSID()==APlist[x].ssid) {
                 return status;
@@ -101,9 +101,9 @@ uint8_t rpcWiFiMulti::run(uint32_t connectTimeout)
     }
 
     scanResult = rpcWiFi.scanNetworks();
-    if(scanResult == WIFI_SCAN_RUNNING) {
+    if(scanResult == RPC_WIFI_SCAN_RUNNING) {
         // scan is running
-        return WL_NO_SSID_AVAIL;
+        return RPC_WL_NO_SSID_AVAIL;
     } else if(scanResult >= 0) {
         // scan done analyze
         rpcWifiAPlist_t bestNetwork { NULL, NULL };
@@ -164,23 +164,23 @@ uint8_t rpcWiFiMulti::run(uint32_t connectTimeout)
 
             auto startTime = millis();
             // wait for connection, fail, or timeout
-            while(status != WL_CONNECTED && status != WL_NO_SSID_AVAIL && status != WL_CONNECT_FAILED && (millis() - startTime) <= connectTimeout) {
+            while(status != RPC_WL_CONNECTED && status != RPC_WL_NO_SSID_AVAIL && status != RPC_WL_CONNECT_FAILED && (millis() - startTime) <= connectTimeout) {
                 delay(10);
                 status = rpcWiFi.status();
             }
 
             switch(status) {
-            case WL_CONNECTED:
+            case RPC_WL_CONNECTED:
                 log_i("[rpcWiFi] Connecting done.");
                 log_d("[rpcWiFi] SSID: %s", rpcWiFi.SSID().c_str());
                 log_d("[rpcWiFi] IP: %s", rpcWiFi.localIP().toString().c_str());
                 log_d("[rpcWiFi] MAC: %s", rpcWiFi.BSSIDstr().c_str());
                 log_d("[rpcWiFi] Channel: %d", rpcWiFi.channel());
                 break;
-            case WL_NO_SSID_AVAIL:
+            case RPC_WL_NO_SSID_AVAIL:
                 log_e("[rpcWiFi] Connecting Failed AP not found.");
                 break;
-            case WL_CONNECT_FAILED:
+            case RPC_WL_CONNECT_FAILED:
                 log_e("[rpcWiFi] Connecting Failed.");
                 break;
             default:

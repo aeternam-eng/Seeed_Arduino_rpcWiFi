@@ -45,10 +45,10 @@ extern "C"
 bool rpcWiFiSTAClass::_autoReconnect = true;
 bool rpcWiFiSTAClass::_useStaticIp = false;
 
-static wl_status_t _sta_status = WL_NO_SHIELD;
+static rpc_wl_status_t _sta_status = RPC_WL_NO_SHIELD;
 static EventGroupHandle_t _sta_status_group = NULL;
 
-void rpcWiFiSTAClass::_setStatus(wl_status_t status)
+void rpcWiFiSTAClass::_setStatus(rpc_wl_status_t status)
 {
     if (!_sta_status_group)
     {
@@ -66,10 +66,10 @@ void rpcWiFiSTAClass::_setStatus(wl_status_t status)
 
 /**
  * Return Connection status.
- * @return one of the value defined in wl_status_t
+ * @return one of the value defined in rpc_wl_status_t
  *
  */
-wl_status_t rpcWiFiSTAClass::status()
+rpc_wl_status_t rpcWiFiSTAClass::status()
 {
     if (!_sta_status_group)
     {
@@ -77,9 +77,9 @@ wl_status_t rpcWiFiSTAClass::status()
     }
     if(wifi_is_connected_to_ap() != RTW_SUCCESS)
     {
-        _setStatus(WL_DISCONNECTED);
+        _setStatus(RPC_WL_DISCONNECTED);
     }
-    return (wl_status_t)xEventGroupClearBits(_sta_status_group, 0);
+    return (rpc_wl_status_t)xEventGroupClearBits(_sta_status_group, 0);
 }
 
 /**
@@ -92,25 +92,25 @@ wl_status_t rpcWiFiSTAClass::status()
  * @param connect                   Optional. call connect
  * @return
  */
-wl_status_t rpcWiFiSTAClass::begin(const char *ssid, const char *passphrase, int32_t channel, const uint8_t *bssid, bool connect)
+rpc_wl_status_t rpcWiFiSTAClass::begin(const char *ssid, const char *passphrase, int32_t channel, const uint8_t *bssid, bool connect)
 {
 
     if (!rpcWiFi.enableSTA(true))
     {
         log_e("STA enable failed!");
-        return WL_CONNECT_FAILED;
+        return RPC_WL_CONNECT_FAILED;
     }
 
     if (!ssid || *ssid == 0x00 || strlen(ssid) > 31)
     {
         log_e("SSID too long or missing!");
-        return WL_CONNECT_FAILED;
+        return RPC_WL_CONNECT_FAILED;
     }
 
     if (passphrase && strlen(passphrase) > 64)
     {
         log_e("passphrase too long!");
-        return WL_CONNECT_FAILED;
+        return RPC_WL_CONNECT_FAILED;
     }
     int ret = RTW_ERROR;
     uint32_t security_type;
@@ -129,7 +129,7 @@ wl_status_t rpcWiFiSTAClass::begin(const char *ssid, const char *passphrase, int
         {
             wifi_off();
             wifi_on(RTW_MODE_STA);
-            return WL_CONNECT_FAILED;
+            return RPC_WL_CONNECT_FAILED;
         }
     }
 
@@ -145,7 +145,7 @@ wl_status_t rpcWiFiSTAClass::begin(const char *ssid, const char *passphrase, int
     if (ret == RTW_ERROR)
     {
         log_e("connect failed!");
-        return WL_CONNECT_FAILED;
+        return RPC_WL_CONNECT_FAILED;
     }
 
     if (!_useStaticIp)
@@ -153,7 +153,7 @@ wl_status_t rpcWiFiSTAClass::begin(const char *ssid, const char *passphrase, int
         if (new_tcpip_adapter_dhcpc_start(RPC_TCPIP_ADAPTER_IF_STA) == ESP_ERR_TCPIP_ADAPTER_DHCPC_START_FAILED)
         {
             log_e("dhcp client start failed!");
-            return WL_CONNECT_FAILED;
+            return RPC_WL_CONNECT_FAILED;
         }
     }
     else
@@ -164,7 +164,7 @@ wl_status_t rpcWiFiSTAClass::begin(const char *ssid, const char *passphrase, int
     if (connect && (wifi_is_connected_to_ap() != RTW_SUCCESS))
     {
         log_e("connect failed!");
-        return WL_CONNECT_FAILED;
+        return RPC_WL_CONNECT_FAILED;
     }
 
     return status();
@@ -172,22 +172,22 @@ wl_status_t rpcWiFiSTAClass::begin(const char *ssid, const char *passphrase, int
 
 /**
  * Use to connect to SDK config.
- * @return wl_status_t
+ * @return rpc_wl_status_t
  */
-wl_status_t rpcWiFiSTAClass::begin()
+rpc_wl_status_t rpcWiFiSTAClass::begin()
 {
 
     if (!rpcWiFi.enableSTA(true))
     {
         log_e("STA enable failed!");
-        return WL_CONNECT_FAILED;
+        return RPC_WL_CONNECT_FAILED;
     }
 
     wlan_fast_reconnect_profile_t wifi_info = {0};
     if (wifi_get_reconnect_data(&wifi_info) == 0)
     {
         log_e("config failed");
-        return WL_CONNECT_FAILED;
+        return RPC_WL_CONNECT_FAILED;
     }
 
     uint32_t channel;
@@ -208,7 +208,7 @@ wl_status_t rpcWiFiSTAClass::begin()
     // if (ret < 0)
     // {
     //     log_e("connect failed!");
-    //     return WL_CONNECT_FAILED;
+    //     return RPC_WL_CONNECT_FAILED;
     // }
 
     if (security_type == RTW_SECURITY_OPEN)
@@ -223,7 +223,7 @@ wl_status_t rpcWiFiSTAClass::begin()
     if (ret == RTW_ERROR)
     {
         log_e("connect failed!");
-        return WL_CONNECT_FAILED;
+        return RPC_WL_CONNECT_FAILED;
     }
 
     if (!_useStaticIp)
@@ -231,7 +231,7 @@ wl_status_t rpcWiFiSTAClass::begin()
         if (new_tcpip_adapter_dhcpc_start(RPC_TCPIP_ADAPTER_IF_STA) == ESP_ERR_TCPIP_ADAPTER_DHCPC_START_FAILED)
         {
             log_e("dhcp client start failed!");
-            return WL_CONNECT_FAILED;
+            return RPC_WL_CONNECT_FAILED;
         }
     }
     else
@@ -239,10 +239,10 @@ wl_status_t rpcWiFiSTAClass::begin()
         new_tcpip_adapter_dhcpc_stop(RPC_TCPIP_ADAPTER_IF_STA);
     }
 
-    if (status() != WL_CONNECTED && (wifi_is_connected_to_ap() != RTW_SUCCESS))
+    if (status() != RPC_WL_CONNECTED && (wifi_is_connected_to_ap() != RTW_SUCCESS))
     {
         log_e("connect failed!");
-        return WL_CONNECT_FAILED;
+        return RPC_WL_CONNECT_FAILED;
     }
 
     return status();
@@ -258,7 +258,7 @@ bool rpcWiFiSTAClass::reconnect()
     {
         if (wifi_disconnect() == RTW_SUCCESS)
         {
-            return begin() != WL_CONNECT_FAILED;
+            return begin() != RPC_WL_CONNECT_FAILED;
         }
     }
     return false;
@@ -267,7 +267,7 @@ bool rpcWiFiSTAClass::reconnect()
 /**
  * Disconnect from the network
  * @param wifioff
- * @return  one value of wl_status_t enum
+ * @return  one value of rpc_wl_status_t enum
  */
 bool rpcWiFiSTAClass::disconnect(bool wifioff, bool eraseap)
 {
@@ -382,7 +382,7 @@ bool rpcWiFiSTAClass::config(IPAddress local_ip, IPAddress gateway, IPAddress su
  */
 bool rpcWiFiSTAClass::isConnected()
 {
-    return (status() == WL_CONNECTED);
+    return (status() == RPC_WL_CONNECTED);
 }
 
 /**
@@ -449,17 +449,17 @@ bool rpcWiFiSTAClass::getAutoReconnect()
 /**
  * Wait for rpcWiFi connection to reach a result
  * returns the status reached or disconnect if STA is off
- * @return wl_status_t
+ * @return rpc_wl_status_t
  */
 uint8_t rpcWiFiSTAClass::waitForConnectResult()
 {
     //1 and 3 have STA enabled
     if ((rpcWiFiGenericClass::getMode() & RPC_WIFI_MODE_STA) == 0)
     {
-        return WL_DISCONNECTED;
+        return RPC_WL_DISCONNECTED;
     }
     int i = 0;
-    while ((!status() || status() >= WL_DISCONNECTED) && i++ < 100)
+    while ((!status() || status() >= RPC_WL_DISCONNECTED) && i++ < 100)
     {
         delay(100);
     }
@@ -773,7 +773,7 @@ IPv6Address rpcWiFiSTAClass::localIPv6()
 //         return false;
 //     }
 
-//     if (!rpcWiFi.mode(WIFI_STA)) {
+//     if (!rpcWiFi.mode(rpcWIFI_STA)) {
 //         return false;
 //     }
 
