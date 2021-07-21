@@ -43,12 +43,14 @@ class rpcWiFiClient : public rpcESPLwIPClient
 protected:
     std::shared_ptr<rpcWiFiClientSocketHandle> clientSocketHandle;
     std::shared_ptr<rpcWiFiClientRxBuffer> _rxBuffer;
+    int _localPort;
     bool _connected;
 
 public:
     rpcWiFiClient *next;
     rpcWiFiClient();
     rpcWiFiClient(int fd);
+    rpcWiFiClient(uint64_t localport);
     ~rpcWiFiClient();
     int connect(IPAddress ip, uint16_t port);
     int connect(IPAddress ip, uint16_t port, int32_t timeout);

@@ -176,6 +176,10 @@ rpcWiFiClient::rpcWiFiClient():_connected(false),next(NULL)
 {
 }
 
+rpcWiFiClient::rpcWiFiClient(uint64_t localePort) {
+    _localPort = localePort;
+}
+
 rpcWiFiClient::rpcWiFiClient(int fd):_connected(true),next(NULL)
 {
     clientSocketHandle.reset(new rpcWiFiClientSocketHandle(fd));
@@ -229,6 +233,23 @@ int rpcWiFiClient::connect(IPAddress ip, uint16_t port, int32_t timeout)
     FD_SET(sockfd, &fdset);
     tv.tv_sec = 0;
     tv.tv_usec = timeout * 1000;
+
+    uint32_t local_ip_addr = localIP();
+    struct sockaddr_in address;
+    bzero((char *) &address, sizeof(address));
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;
+    // bcopy((const void *)(&local_ip_addr), (void *)&address.sin_addr.s_addr, 4);
+    address.sin_port = htons(_localPort);
+
+    int bindResult = bind(sockfd, (struct sockaddr*)&address, sizeof(address));
+    if(bindResult == EADDRINUSE || bindResult == 0) {
+        log_d("Client socket bound to Port: %d", _localPort);
+    } else {
+        log_e("Could not bind socket to port: %d - Error: %d | \"%s\"", _localPort, errno, strerror(errno));
+        new_lwip_close(sockfd);
+        return 0;
+    }
 
     int res = lwip_connect_r(sockfd, (struct sockaddr*)&serveraddr, sizeof(serveraddr));
     if (res < 0 && errno != EINPROGRESS) {

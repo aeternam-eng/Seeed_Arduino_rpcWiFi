@@ -410,7 +410,7 @@ rpc_esp_err_t rpcWiFiGenericClass::_eventCallback(void *arg, rpc_system_event_t 
     else if (event->event_id == RPC_SYSTEM_EVENT_STA_DISCONNECTED)
     {
         uint8_t reason = event->event_info.disconnected.reason;
-        log_w("Reason: %u - %s", reason, reason2str(reason));
+        // log_w("Reason: %u - %s", reason, reason2str(reason));
         if (reason == RPC_WIFI_REASON_NO_AP_FOUND)
         {
             rpcWiFiSTAClass::_setStatus(RPC_WL_NO_SSID_AVAIL);
